@@ -4,16 +4,19 @@ local LocalPlayer = Players.LocalPlayer
 local espEnabled = true
 local highlighted = {}
 
+-- Crear GUI
 local screenGui = Instance.new("ScreenGui", LocalPlayer:WaitForChild("PlayerGui"))
 screenGui.Name = "DarkGui"
 screenGui.ResetOnSpawn = false
 
+-- Main Frame
 local mainFrame = Instance.new("Frame", screenGui)
 mainFrame.Name = "MainFrame"
 mainFrame.Size = UDim2.new(0, 250, 0, 120)
 mainFrame.Position = UDim2.new(0.5, -125, 0.5, -60)
 mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 
+-- Botones
 local closeButton = Instance.new("TextButton", mainFrame)
 closeButton.Name = "CloseButton"
 closeButton.Text = "X"
@@ -35,6 +38,7 @@ toggleESPButton.Size = UDim2.new(0.8, 0, 0, 40)
 toggleESPButton.Position = UDim2.new(0.1, 0, 0.5, 0)
 toggleESPButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 
+-- Minimized Bar
 local minimizedBar = Instance.new("TextButton", screenGui)
 minimizedBar.Name = "MinimizedBar"
 minimizedBar.Text = "Dark"
@@ -43,6 +47,7 @@ minimizedBar.Position = UDim2.new(0, 10, 0, 10)
 minimizedBar.Visible = false
 minimizedBar.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 
+-- Highlight functions
 local function addHighlight(character)
 	if highlighted[character] or not espEnabled then return end
 	local hl = Instance.new("Highlight")
@@ -80,6 +85,7 @@ local function onPlayerAdded(player)
 	end
 end
 
+-- Toggle ESP
 local function toggleESP()
 	espEnabled = not espEnabled
 	toggleESPButton.Text = espEnabled and "Desactivar ESP" or "Activar ESP"
@@ -96,6 +102,7 @@ local function toggleESP()
 	end
 end
 
+-- GUI button logic
 closeButton.MouseButton1Click:Connect(function()
 	mainFrame.Visible = false
 	minimizedBar.Visible = false
@@ -113,45 +120,8 @@ end)
 
 toggleESPButton.MouseButton1Click:Connect(toggleESP)
 
+-- Start
 Players.PlayerAdded:Connect(onPlayerAdded)
 for _, p in ipairs(Players:GetPlayers()) do
 	onPlayerAdded(p)
 end
-
-local dragging, dragInput, dragStart, startPos
-
-local function update(input)
-	local delta = input.Position - dragStart
-	mainFrame.Position = UDim2.new(
-		startPos.X.Scale,
-		startPos.X.Offset + delta.X,
-		startPos.Y.Scale,
-		startPos.Y.Offset + delta.Y
-	)
-end
-
-mainFrame.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 then
-		dragging = true
-		dragStart = input.Position
-		startPos = mainFrame.Position
-
-		input.Changed:Connect(function()
-			if input.UserInputState == Enum.UserInputState.End then
-				dragging = false
-			end
-		end)
-	end
-end)
-
-mainFrame.InputChanged:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseMovement then
-		dragInput = input
-	end
-end)
-
-game:GetService("UserInputService").InputChanged:Connect(function(input)
-	if input == dragInput and dragging then
-		update(input)
-	end
-end)
