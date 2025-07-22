@@ -42,10 +42,10 @@ toggleESPButton.BackgroundColor3 = Color3.fromRGB(250, 250, 250)
 local minimizedBar = Instance.new("TextButton", screenGui)
 minimizedBar.Name = "MinimizedBar"
 minimizedBar.Text = "Dark"
-minimizedBar.TextColor3 = Color3.new(1, 1, 1) -- texto blanco
+minimizedBar.TextColor3 = Color3.new(250, 250, 250) -- texto blanco
 minimizedBar.Size = UDim2.new(0, 80, 0, 30)
 minimizedBar.Position = UDim2.new(0.5, -40, 0, 10) -- centrado arriba
-minimizedBar.BackgroundColor3 = Color3.fromRGB(250, 250, 250)
+minimizedBar.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 minimizedBar.Visible = false
 
 -- Highlight functions
