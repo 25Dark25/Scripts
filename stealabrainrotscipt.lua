@@ -47,6 +47,7 @@ minimizedBar.Size = UDim2.new(0, 80, 0, 30)
 minimizedBar.Position = UDim2.new(0.5, -40, 0, 10) -- centrado arriba
 minimizedBar.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 minimizedBar.Visible = false
+minimizedBar.AutoLocalize = false
 
 
 -- Highlight functions
