@@ -1,8 +1,9 @@
-GetService("Players")
+local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
 local espEnabled = true
 local highlighted = {}
+local connections = {}
 
 -- Crear GUI
 local screenGui = Instance.new("ScreenGui", LocalPlayer:WaitForChild("PlayerGui"))
@@ -20,6 +21,7 @@ mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 local closeButton = Instance.new("TextButton", mainFrame)
 closeButton.Name = "CloseButton"
 closeButton.Text = "X"
+closeButton.TextColor3 = Color3.new(1, 1, 1)
 closeButton.Size = UDim2.new(0, 30, 0, 30)
 closeButton.Position = UDim2.new(1, -35, 0, 5)
 closeButton.BackgroundColor3 = Color3.fromRGB(250, 0, 0)
@@ -27,24 +29,26 @@ closeButton.BackgroundColor3 = Color3.fromRGB(250, 0, 0)
 local minimizeButton = Instance.new("TextButton", mainFrame)
 minimizeButton.Name = "MinimizeButton"
 minimizeButton.Text = "-"
+minimizeButton.TextColor3 = Color3.new(1, 1, 1)
 minimizeButton.Size = UDim2.new(0, 30, 0, 30)
 minimizeButton.Position = UDim2.new(1, -70, 0, 5)
-minimizeButton.BackgroundColor3 = Color3.fromRGB(250, 250, 250)
+minimizeButton.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
 
 local toggleESPButton = Instance.new("TextButton", mainFrame)
 toggleESPButton.Name = "ToggleESPButton"
 toggleESPButton.Text = "Desactivar ESP"
+toggleESPButton.TextColor3 = Color3.new(1, 1, 1)
 toggleESPButton.Size = UDim2.new(0.8, 0, 0, 40)
 toggleESPButton.Position = UDim2.new(0.1, 0, 0.5, 0)
-toggleESPButton.BackgroundColor3 = Color3.fromRGB(250, 250, 250)
+toggleESPButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
 
 -- Minimized Bar
 local minimizedBar = Instance.new("TextButton", screenGui)
 minimizedBar.Name = "MinimizedBar"
 minimizedBar.Text = "Dark"
-minimizedBar.TextColor3 = Color3.new(250, 250, 250) -- texto blanco
+minimizedBar.TextColor3 = Color3.new(1, 1, 1)
 minimizedBar.Size = UDim2.new(0, 80, 0, 30)
-minimizedBar.Position = UDim2.new(0.5, -40, 0, 10) -- centrado arriba
+minimizedBar.Position = UDim2.new(0.5, -40, 0, 10)
 minimizedBar.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 minimizedBar.Visible = false
 
@@ -73,14 +77,15 @@ local function onCharacterAdded(character)
 	if espEnabled then
 		addHighlight(character)
 	end
-	character:WaitForChild("Humanoid").Died:Connect(function()
+	local humanoid = character:WaitForChild("Humanoid")
+	table.insert(connections, humanoid.Died:Connect(function()
 		removeHighlight(character)
-	end)
+	end))
 end
 
 local function onPlayerAdded(player)
 	if player == LocalPlayer then return end
-	player.CharacterAdded:Connect(onCharacterAdded)
+	table.insert(connections, player.CharacterAdded:Connect(onCharacterAdded))
 	if player.Character then
 		onCharacterAdded(player.Character)
 	end
@@ -103,31 +108,48 @@ local function toggleESP()
 	end
 end
 
--- GUI button logic
-closeButton.MouseButton1Click:Connect(function()
-	mainFrame.Visible = false
-	minimizedBar.Visible = false
-end)
+-- Shutdown y limpieza total
+local function shutdown()
+	espEnabled = false
+	for _, conn in ipairs(connections) do
+		if conn and typeof(conn) == "RBXScriptConnection" then
+			conn:Disconnect()
+		end
+	end
+	table.clear(connections)
 
-minimizeButton.MouseButton1Click:Connect(function()
+	for char, hl in pairs(highlighted) do
+		if hl then hl:Destroy() end
+	end
+	table.clear(highlighted)
+
+	if screenGui then
+		screenGui:Destroy()
+	end
+end
+
+-- Botones GUI
+table.insert(connections, closeButton.MouseButton1Click:Connect(shutdown))
+
+table.insert(connections, minimizeButton.MouseButton1Click:Connect(function()
 	mainFrame.Visible = false
 	minimizedBar.Visible = true
-end)
+end))
 
-minimizedBar.MouseButton1Click:Connect(function()
+table.insert(connections, minimizedBar.MouseButton1Click:Connect(function()
 	mainFrame.Visible = true
 	minimizedBar.Visible = false
-end)
+end))
 
-toggleESPButton.MouseButton1Click:Connect(toggleESP)
+table.insert(connections, toggleESPButton.MouseButton1Click:Connect(toggleESP))
 
--- Start
-Players.PlayerAdded:Connect(onPlayerAdded)
+-- Start ESP
+table.insert(connections, Players.PlayerAdded:Connect(onPlayerAdded))
 for _, p in ipairs(Players:GetPlayers()) do
 	onPlayerAdded(p)
 end
 
--- Función para arrastrar la ventana
+-- Arrastrar MainFrame
 local dragging, dragInput, dragStart, startPos
 
 local function update(input)
@@ -140,33 +162,33 @@ local function update(input)
 	)
 end
 
-mainFrame.InputBegan:Connect(function(input)
+table.insert(connections, mainFrame.InputBegan:Connect(function(input)
 	if input.UserInputType == Enum.UserInputType.MouseButton1 then
 		dragging = true
 		dragStart = input.Position
 		startPos = mainFrame.Position
 
-		input.Changed:Connect(function()
+		table.insert(connections, input.Changed:Connect(function()
 			if input.UserInputState == Enum.UserInputState.End then
 				dragging = false
 			end
-		end)
+		end))
 	end
-end)
+end))
 
-mainFrame.InputChanged:Connect(function(input)
+table.insert(connections, mainFrame.InputChanged:Connect(function(input)
 	if input.UserInputType == Enum.UserInputType.MouseMovement then
 		dragInput = input
 	end
-end)
+end))
 
-game:GetService("UserInputService").InputChanged:Connect(function(input)
+table.insert(connections, game:GetService("UserInputService").InputChanged:Connect(function(input)
 	if input == dragInput and dragging then
 		update(input)
 	end
-end)
+end))
 
--- Hacer MinimizedBar arrastrable también
+-- Arrastrar MinimizedBar
 local draggingMini, dragInputMini, dragStartMini, startPosMini
 
 local function updateMini(input)
@@ -179,28 +201,28 @@ local function updateMini(input)
 	)
 end
 
-minimizedBar.InputBegan:Connect(function(input)
+table.insert(connections, minimizedBar.InputBegan:Connect(function(input)
 	if input.UserInputType == Enum.UserInputType.MouseButton1 then
 		draggingMini = true
 		dragStartMini = input.Position
 		startPosMini = minimizedBar.Position
 
-		input.Changed:Connect(function()
+		table.insert(connections, input.Changed:Connect(function()
 			if input.UserInputState == Enum.UserInputState.End then
 				draggingMini = false
 			end
-		end)
+		end))
 	end
-end)
+end))
 
-minimizedBar.InputChanged:Connect(function(input)
+table.insert(connections, minimizedBar.InputChanged:Connect(function(input)
 	if input.UserInputType == Enum.UserInputType.MouseMovement then
 		dragInputMini = input
 	end
-end)
+end))
 
-game:GetService("UserInputService").InputChanged:Connect(function(input)
+table.insert(connections, game:GetService("UserInputService").InputChanged:Connect(function(input)
 	if input == dragInputMini and draggingMini then
 		updateMini(input)
 	end
-end)
+end))
