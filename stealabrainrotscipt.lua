@@ -22,30 +22,31 @@ closeButton.Name = "CloseButton"
 closeButton.Text = "X"
 closeButton.Size = UDim2.new(0, 30, 0, 30)
 closeButton.Position = UDim2.new(1, -35, 0, 5)
-closeButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+closeButton.BackgroundColor3 = Color3.fromRGB(250, 0, 0)
 
 local minimizeButton = Instance.new("TextButton", mainFrame)
 minimizeButton.Name = "MinimizeButton"
 minimizeButton.Text = "-"
 minimizeButton.Size = UDim2.new(0, 30, 0, 30)
 minimizeButton.Position = UDim2.new(1, -70, 0, 5)
-minimizeButton.BackgroundColor3 = Color3.fromRGB(200, 200, 0)
+minimizeButton.BackgroundColor3 = Color3.fromRGB(250, 250, 250)
 
 local toggleESPButton = Instance.new("TextButton", mainFrame)
 toggleESPButton.Name = "ToggleESPButton"
 toggleESPButton.Text = "Desactivar ESP"
 toggleESPButton.Size = UDim2.new(0.8, 0, 0, 40)
 toggleESPButton.Position = UDim2.new(0.1, 0, 0.5, 0)
-toggleESPButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+toggleESPButton.BackgroundColor3 = Color3.fromRGB(250, 250, 250)
 
 -- Minimized Bar
 local minimizedBar = Instance.new("TextButton", screenGui)
 minimizedBar.Name = "MinimizedBar"
 minimizedBar.Text = "Dark"
+minimizedBar.TextColor3 = Color3.new(1, 1, 1) -- texto blanco
 minimizedBar.Size = UDim2.new(0, 80, 0, 30)
-minimizedBar.Position = UDim2.new(0, 10, 0, 10)
+minimizedBar.Position = UDim2.new(0.5, -40, 0, 10) -- centrado arriba
+minimizedBar.BackgroundColor3 = Color3.fromRGB(250, 250, 250)
 minimizedBar.Visible = false
-minimizedBar.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 
 -- Highlight functions
 local function addHighlight(character)
@@ -162,5 +163,44 @@ end)
 game:GetService("UserInputService").InputChanged:Connect(function(input)
 	if input == dragInput and dragging then
 		update(input)
+	end
+end)
+
+-- Hacer MinimizedBar arrastrable también
+local draggingMini, dragInputMini, dragStartMini, startPosMini
+
+local function updateMini(input)
+	local delta = input.Position - dragStartMini
+	minimizedBar.Position = UDim2.new(
+		startPosMini.X.Scale,
+		startPosMini.X.Offset + delta.X,
+		startPosMini.Y.Scale,
+		startPosMini.Y.Offset + delta.Y
+	)
+end
+
+minimizedBar.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		draggingMini = true
+		dragStartMini = input.Position
+		startPosMini = minimizedBar.Position
+
+		input.Changed:Connect(function()
+			if input.UserInputState == Enum.UserInputState.End then
+				draggingMini = false
+			end
+		end)
+	end
+end)
+
+minimizedBar.InputChanged:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseMovement then
+		dragInputMini = input
+	end
+end)
+
+game:GetService("UserInputService").InputChanged:Connect(function(input)
+	if input == dragInputMini and draggingMini then
+		updateMini(input)
 	end
 end)
