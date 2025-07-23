@@ -147,6 +147,19 @@ table.insert(connections, Players.PlayerAdded:Connect(onPlayerAdded))
 for _, p in ipairs(Players:GetPlayers()) do
     onPlayerAdded(p)
 end
+-- Auto-refresh ESP every second
+task.spawn(function()
+    while true do
+        task.wait(1)
+        if espEnabled then
+            for _, player in ipairs(Players:GetPlayers()) do
+                if player ~= LocalPlayer and player.Character then
+                    addHighlight(player.Character)
+                end
+            end
+        end
+    end
+end)
 
 -- Make draggable
 local function makeDraggable(frame)
