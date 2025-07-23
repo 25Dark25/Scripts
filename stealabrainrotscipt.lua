@@ -51,11 +51,11 @@ minimizedBar.AutoButtonColor = true
 local corner = Instance.new("UICorner", minimizedBar)
 corner.CornerRadius = UDim.new(1, 0)
 
--- Highlight functions
 local function addHighlight(character)
     if highlighted[character] or not espEnabled then return end
     local player = Players:GetPlayerFromCharacter(character)
-    if not player or (ignoreTeammates and player.Team == LocalPlayer.Team) then return end
+    if not player or player == LocalPlayer then return end
+    if ignoreTeammates and player.Team == LocalPlayer.Team then return end
 
     local hl = Instance.new("Highlight")
     hl.Name = "ClientHighlight"
@@ -76,21 +76,53 @@ local function removeHighlight(character)
 end
 
 local function onCharacterAdded(character)
+    -- Esperar que humanoide exista
+    local humanoid = character:WaitForChild("Humanoid", 5)
+    if not humanoid then return end
+
+    -- Añadir highlight si ESP está activado
     if espEnabled then
         addHighlight(character)
     end
-    character:WaitForChild("Humanoid").Died:Connect(function()
+
+    -- Cuando el humanoide muere, quitar highlight
+    humanoid.Died:Connect(function()
         removeHighlight(character)
     end)
 end
 
 local function onPlayerAdded(player)
     if player == LocalPlayer then return end
+
+    -- Cuando el personaje se añade
     player.CharacterAdded:Connect(onCharacterAdded)
+
+    -- Si el personaje ya existe al momento de unirse
     if player.Character then
         onCharacterAdded(player.Character)
     end
+
+    -- Opcional: refrescar ESP si el jugador cambia de equipo
+    player:GetPropertyChangedSignal("Team"):Connect(function()
+        if espEnabled then
+            refreshESP()
+        end
+    end)
 end
+
+local function refreshESP()
+    -- Limpiar todos los highlights actuales
+    for char in pairs(highlighted) do
+        removeHighlight(char)
+    end
+    -- Re-agregar highlights solo a los personajes que cumplen condición
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer and p.Character then
+            addHighlight(p.Character)
+        end
+    end
+end
+
 
 local function toggleESP()
     espEnabled = not espEnabled
