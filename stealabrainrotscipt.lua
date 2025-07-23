@@ -1,11 +1,9 @@
--- SERVICIOS Y VARIABLES PRINCIPALES
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
--- ESTADOS
 local espEnabled = true
 local aimbotEnabled = false
 local ignoreTeammates = false
@@ -14,18 +12,15 @@ local aimbotHold = false
 local smoothing = 0.15
 local fovRadius = 100
 
--- TRACKING
 local highlighted = {}
 local connections = {}
 
--- GUI PRINCIPAL
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "DarkGui"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 screenGui.DisplayOrder = 10000
 
--- FRAME PRINCIPAL
 local mainFrame = Instance.new("Frame", screenGui)
 mainFrame.Name = "MainFrame"
 mainFrame.Size = UDim2.new(0, 250, 0, 200)
@@ -35,7 +30,6 @@ mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 local minimized = false
 local savedPosition = mainFrame.Position
 
--- Crear el logo redondo que se muestra al minimizar
 local logoImage = Instance.new("ImageButton")
 logoImage.Name = "LogoImage"
 logoImage.Size = UDim2.new(0, 50, 0, 50)
@@ -44,14 +38,12 @@ logoImage.BackgroundTransparency = 1
 logoImage.Image = "rbxassetid://119268860825586"
 logoImage.Visible = false
 logoImage.Parent = screenGui
-logoImage.ZIndex = 999999 -- Asegura que esté encima
+logoImage.ZIndex = 999999 
 
--- Hacerlo redondo
 local logoUICorner = Instance.new("UICorner")
 logoUICorner.CornerRadius = UDim.new(1, 0)
 logoUICorner.Parent = logoImage
 
--- Permitir mover el logo
 local dragging, offset
 logoImage.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
@@ -74,7 +66,6 @@ UserInputService.InputChanged:Connect(function(input)
     end
 end)
 
--- Hacer movible el mainFrame
 local draggingMain, dragInput, startPos, dragStart
 mainFrame.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
@@ -97,7 +88,6 @@ UserInputService.InputChanged:Connect(function(input)
     end
 end)
 
--- FUNCION PARA CREAR BOTONES
 local function createButton(parent, text, size, position, color)
     local btn = Instance.new("TextButton", parent)
     btn.Name = text:gsub("%s", "") .. "Button"
@@ -110,7 +100,6 @@ local function createButton(parent, text, size, position, color)
     return btn
 end
 
--- BOTONES DE CONTROL
 local closeButton = createButton(mainFrame, "X", UDim2.new(0, 30, 0, 30), UDim2.new(1, -35, 0, 5), Color3.fromRGB(255, 0, 0))
 local minimizeButton = createButton(mainFrame, "-", UDim2.new(0, 30, 0, 30), UDim2.new(1, -70, 0, 5), Color3.fromRGB(200, 200, 200))
 local toggleESPButton = createButton(mainFrame, "Disable ESP", UDim2.new(0.8, 0, 0, 30), UDim2.new(0.1, 0, 0.30, 0), Color3.fromRGB(200, 200, 200))
@@ -118,7 +107,6 @@ local toggleTeamButton = createButton(mainFrame, "Ignore teammates: OFF", UDim2.
 local toggleAimbotButton = createButton(mainFrame, "Enable Aimbot", UDim2.new(0.8, 0, 0, 30), UDim2.new(0.1, 0, 0.70, 0), Color3.fromRGB(200, 200, 200))
 local aimbotKeyButton = createButton(mainFrame, "Change Aimbot Key", UDim2.new(0.8, 0, 0, 30), UDim2.new(0.1, 0, 0.90, 0), Color3.fromRGB(100, 100, 255))
 
--- AHORA conectamos los botones
 minimizeButton.MouseButton1Click:Connect(function()
     minimized = not minimized
     mainFrame.Visible = not minimized
@@ -132,7 +120,6 @@ logoImage.MouseButton1Click:Connect(function()
     mainFrame.Visible = true
 end)
 
--- CÍRCULO DE FOV
 local fovCircle = Drawing.new("Circle")
 fovCircle.Color = Color3.fromRGB(255, 0, 0)
 fovCircle.Thickness = 1
@@ -142,7 +129,6 @@ fovCircle.Transparency = 1
 fovCircle.Visible = false
 fovCircle.Filled = false
 
--- FUNCIONES ESP
 local function addHighlight(character)
     if highlighted[character] or not espEnabled then return end
     local player = Players:GetPlayerFromCharacter(character)
@@ -199,7 +185,6 @@ local function refreshESP()
     end
 end
 
--- AIMBOT
 local function getClosestTarget()
     local closest = nil
     local shortest = math.huge
@@ -231,7 +216,6 @@ local function aimAtTarget(target)
     mousemoverel(move.X, move.Y)
 end
 
--- INPUT
 UserInputService.InputBegan:Connect(function(input, processed)
     if processed then return end
     if input.UserInputType == aimbotKey then
@@ -245,7 +229,6 @@ UserInputService.InputEnded:Connect(function(input)
     end
 end)
 
--- EVENTOS
 closeButton.MouseButton1Click:Connect(function()
     espEnabled = false
     aimbotEnabled = false
@@ -296,7 +279,6 @@ for _, player in ipairs(Players:GetPlayers()) do
     end
 end
 
--- RENDER LOOP
 RunService.RenderStepped:Connect(function()
     if espEnabled then
         updateHighlightColors()
