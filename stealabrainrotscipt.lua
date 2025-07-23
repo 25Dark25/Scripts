@@ -73,20 +73,20 @@ local function isVisible(character)
 
     local head = character.Head
     local origin = Camera.CFrame.Position
-    local direction = (head.Position - origin).Unit * (head.Position - origin).Magnitude
+    local direction = (head.Position - origin)
 
     local raycastParams = RaycastParams.new()
-    raycastParams.FilterDescendantsInstances = {
-        LocalPlayer.Character,  -- Ignora tu personaje
-        Camera -- Ignora cámara (importante en armas con viewmodel)
-    }
     raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
+    raycastParams.FilterDescendantsInstances = {
+        LocalPlayer.Character
+    }
+    raycastParams.IgnoreWater = true
 
     local result = workspace:Raycast(origin, direction, raycastParams)
-    return (not result or result.Instance:IsDescendantOf(character))
+
+    -- Si no impacta nada, o impacta el enemigo, está visible
+    return not result or result.Instance:IsDescendantOf(character)
 end
-
-
 
 local function updateHighlightColors()
     for character, hl in pairs(highlighted) do
