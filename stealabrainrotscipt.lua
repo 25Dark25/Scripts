@@ -16,7 +16,6 @@ local fovRadius = 100
 
 -- TRACKING
 local highlighted = {}
-local connections = {}
 
 -- GUI PRINCIPAL
 local screenGui = Instance.new("ScreenGui")
@@ -26,17 +25,18 @@ screenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 screenGui.DisplayOrder = 10000
 
 -- FRAME PRINCIPAL
-local mainFrame = Instance.new("Frame", screenGui)
+local mainFrame = Instance.new("Frame")
 mainFrame.Name = "MainFrame"
 mainFrame.Size = UDim2.new(0, 300, 0, 350)
 mainFrame.Position = UDim2.new(0.5, -150, 0.5, -175)
 mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 mainFrame.Active = true
 mainFrame.Draggable = true
+mainFrame.Parent = screenGui -- Importante: agregar a screenGui
 
 -- FUNCION PARA CREAR BOTONES
 local function createButton(parent, text, size, position, color)
-    local btn = Instance.new("TextButton", parent)
+    local btn = Instance.new("TextButton")
     btn.Name = text:gsub("%s", "") .. "Button"
     btn.Size = size
     btn.Position = position
@@ -44,41 +44,47 @@ local function createButton(parent, text, size, position, color)
     btn.TextColor3 = Color3.fromRGB(0, 0, 0)
     btn.BackgroundColor3 = color
     btn.AutoLocalize = false
+    btn.AutoButtonColor = true -- Aseguramos que esté activo para efecto visual y clics
+    btn.Parent = parent
     return btn
 end
 
--- FUNCION PARA CREAR SLIDER
+-- FUNCION PARA CREAR SLIDER (igual que antes)
 local function createSlider(parent, labelText, minValue, maxValue, defaultValue, size, position)
-    local frame = Instance.new("Frame", parent)
+    local frame = Instance.new("Frame")
     frame.Size = size
     frame.Position = position
     frame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
     frame.BorderSizePixel = 0
+    frame.Parent = parent
 
-    local label = Instance.new("TextLabel", frame)
+    local label = Instance.new("TextLabel")
     label.Size = UDim2.new(1, 0, 0, 20)
     label.BackgroundTransparency = 1
     label.TextColor3 = Color3.fromRGB(255, 255, 255)
     label.Font = Enum.Font.SourceSans
     label.TextSize = 16
-    label.Text = labelText
+    label.Text = labelText .. ": " .. tostring(defaultValue)
     label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = frame
 
-    local sliderBackground = Instance.new("Frame", frame)
+    local sliderBackground = Instance.new("Frame")
     sliderBackground.Size = UDim2.new(1, -20, 0, 10)
     sliderBackground.Position = UDim2.new(0, 10, 0, 25)
     sliderBackground.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
     sliderBackground.BorderSizePixel = 0
     sliderBackground.ClipsDescendants = true
     sliderBackground.Name = "SliderBackground"
+    sliderBackground.Parent = frame
 
-    local sliderFill = Instance.new("Frame", sliderBackground)
+    local sliderFill = Instance.new("Frame")
     sliderFill.Size = UDim2.new((defaultValue - minValue) / (maxValue - minValue), 0, 1, 0)
     sliderFill.BackgroundColor3 = Color3.fromRGB(0, 150, 255)
     sliderFill.BorderSizePixel = 0
     sliderFill.Name = "SliderFill"
+    sliderFill.Parent = sliderBackground
 
-    local sliderHandle = Instance.new("ImageLabel", sliderBackground)
+    local sliderHandle = Instance.new("ImageLabel")
     sliderHandle.Size = UDim2.new(0, 20, 1, 0)
     sliderHandle.BackgroundTransparency = 1
     sliderHandle.Image = "rbxassetid://3570695787" -- círculo blanco
@@ -88,22 +94,23 @@ local function createSlider(parent, labelText, minValue, maxValue, defaultValue,
     sliderHandle.Active = true
     sliderHandle.Selectable = true
     sliderHandle.Draggable = true
+    sliderHandle.Parent = sliderBackground
 
-    -- Función para actualizar el slider y valor
+    local dragging = false
+    local currentValue = defaultValue
+
     local function updateSlider(input)
         local relativePos = math.clamp(input.Position.X - sliderBackground.AbsolutePosition.X, 0, sliderBackground.AbsoluteSize.X)
         local percent = relativePos / sliderBackground.AbsoluteSize.X
         sliderFill.Size = UDim2.new(percent, 0, 1, 0)
         sliderHandle.Position = UDim2.new(percent - 0.05, 0, 0, 0)
         local value = minValue + percent * (maxValue - minValue)
-        return value
+        currentValue = value
+        label.Text = labelText .. ": " .. string.format("%.2f", value)
+        if frame.ValueChanged then
+            frame.ValueChanged(value)
+        end
     end
-
-    -- Variable para el valor actual
-    local currentValue = defaultValue
-
-    -- Conexión del drag para el slider
-    local dragging = false
 
     sliderHandle.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
@@ -119,30 +126,24 @@ local function createSlider(parent, labelText, minValue, maxValue, defaultValue,
 
     sliderBackground.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            currentValue = updateSlider(input)
-            frame.ValueChanged(currentValue)
+            updateSlider(input)
         end
     end)
 
     UserInputService.InputChanged:Connect(function(input)
         if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-            currentValue = updateSlider(input)
-            frame.ValueChanged(currentValue)
+            updateSlider(input)
         end
     end)
 
-    -- Función pública para asignar el callback cuando cambia el valor
-    function frame.ValueChanged(value)
-        -- Esto se va a definir desde fuera
+    function frame.GetValue()
+        return currentValue
     end
 
-    -- Valor inicial
-    frame.Value = defaultValue
-
-    return frame, function() return currentValue end
+    return frame
 end
 
--- BOTONES DE CONTROL
+-- CREACION DE BOTONES
 local closeButton = createButton(mainFrame, "X", UDim2.new(0, 30, 0, 30), UDim2.new(1, -35, 0, 5), Color3.fromRGB(255, 0, 0))
 local minimizeButton = createButton(mainFrame, "-", UDim2.new(0, 30, 0, 30), UDim2.new(1, -70, 0, 5), Color3.fromRGB(200, 200, 200))
 local toggleESPButton = createButton(mainFrame, "Disable ESP", UDim2.new(0.8, 0, 0, 30), UDim2.new(0.1, 0, 0.25, 0), Color3.fromRGB(200, 200, 200))
@@ -150,11 +151,12 @@ local toggleTeamButton = createButton(mainFrame, "Ignore teammates: OFF", UDim2.
 local toggleAimbotButton = createButton(mainFrame, "Enable Aimbot", UDim2.new(0.8, 0, 0, 30), UDim2.new(0.1, 0, 0.55, 0), Color3.fromRGB(200, 200, 200))
 local aimbotKeyButton = createButton(mainFrame, "Change Aimbot Key", UDim2.new(0.8, 0, 0, 30), UDim2.new(0.1, 0, 0.70, 0), Color3.fromRGB(100, 100, 255))
 
--- SLIDERS PARA FOV Y SMOOTHING
-local fovSlider, getFovValue = createSlider(mainFrame, "FOV", 50, 300, fovRadius, UDim2.new(0.8, 0, 0, 40), UDim2.new(0.1, 0, 0.85, 0))
-local smoothSlider, getSmoothValue = createSlider(mainFrame, "Smooth", 0.05, 1, smoothing, UDim2.new(0.8, 0, 0, 40), UDim2.new(0.1, 0, 0.95, 0))
+-- CREACION DE SLIDERS
+local fovSlider = createSlider(mainFrame, "FOV", 50, 300, fovRadius, UDim2.new(0.8, 0, 0, 40), UDim2.new(0.1, 0, 0.85, 0))
+local smoothSlider = createSlider(mainFrame, "Smooth", 0.05, 1, smoothing, UDim2.new(0.8, 0, 0, 40), UDim2.new(0.1, 0, 0.95, 0))
 
 -- CÍRCULO DE FOV
+local Drawing = Drawing -- si usas Drawing library disponible
 local fovCircle = Drawing.new("Circle")
 fovCircle.Color = Color3.fromRGB(255, 0, 0)
 fovCircle.Thickness = 1
@@ -165,7 +167,8 @@ fovCircle.Visible = false
 fovCircle.Filled = false
 fovCircle.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
 
--- FUNCIONES
+-- FUNCIONES PARA FILTRADO, ESP, AIMBOT ETC.
+
 local function isVisible(character)
     if not character or not character:FindFirstChild("Head") then return false end
     local origin = Camera.CFrame.Position
@@ -204,7 +207,7 @@ local function aimAtTarget(target)
     mousemoverel(move.X, move.Y)
 end
 
--- EVENTOS DE LOS SLIDERS
+-- EVENTOS PARA SLIDERS
 
 fovSlider.ValueChanged = function(value)
     fovRadius = math.floor(value)
@@ -217,7 +220,7 @@ smoothSlider.ValueChanged = function(value)
     smoothSlider:FindFirstChildOfClass("TextLabel").Text = "Smooth: " .. smoothing
 end
 
--- BOTONES
+-- EVENTOS PARA BOTONES
 
 closeButton.MouseButton1Click:Connect(function()
     espEnabled = false
@@ -300,7 +303,6 @@ RunService.RenderStepped:Connect(function()
             if player ~= LocalPlayer and player.Character then
                 local character = player.Character
                 if ignoreTeammates and player.Team == LocalPlayer.Team then
-                    -- Si ignoro compañeros y este es compañero, remuevo highlight si existe
                     if highlighted[character] then
                         highlighted[character]:Destroy()
                         highlighted[character] = nil
@@ -321,7 +323,6 @@ RunService.RenderStepped:Connect(function()
             end
         end
     else
-        -- Si ESP está deshabilitado, eliminar highlights
         for char, hl in pairs(highlighted) do
             if hl and hl.Parent then
                 hl:Destroy()
@@ -335,6 +336,5 @@ RunService.RenderStepped:Connect(function()
         aimAtTarget(target)
     end
 
-    -- Actualizar posición del círculo de FOV al centro de pantalla cada frame
     fovCircle.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
 end)
