@@ -56,9 +56,10 @@ local dragging, offset
 logoImage.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
         dragging = true
-        offset = input.Position - logoImage.AbsolutePosition
+        offset = Vector2.new(logoImage.Size.X.Offset, logoImage.Size.Y.Offset) / 2
     end
 end)
+
 
 UserInputService.InputEnded:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
@@ -129,7 +130,6 @@ logoImage.MouseButton1Click:Connect(function()
     minimized = false
     logoImage.Visible = false
     mainFrame.Visible = true
-    mainFrame.Position = logoImage.Position
 end)
 
 -- CÍRCULO DE FOV
