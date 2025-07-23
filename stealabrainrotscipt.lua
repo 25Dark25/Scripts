@@ -254,11 +254,16 @@ local function makeDraggable(frame)
     end)
 end
 
-RunService.Heartbeat:Connect(function()
-    if espEnabled then
-        updateHighlightColors()
+-- Optimización: actualización del color ESP cada 0.2s en lugar de cada frame
+task.spawn(function()
+    while true do
+        task.wait(0.2)
+        if espEnabled then
+            updateHighlightColors()
+        end
     end
 end)
+
 
 makeDraggable(mainFrame)
 makeDraggable(minimizedBar)
