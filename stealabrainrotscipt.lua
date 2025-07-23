@@ -24,6 +24,7 @@ screenGui.Name = "DarkGui"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 screenGui.DisplayOrder = 10000
+screenGui.IgnoreGuiInset = true
 
 -- FRAME PRINCIPAL
 local mainFrame = Instance.new("Frame", screenGui)
@@ -33,127 +34,10 @@ mainFrame.Position = UDim2.new(0.5, -125, 0.5, -100)
 mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 
 local minimized = false
-local savedPosition = mainFrame.Position
-
-screenGui.IgnoreGuiInset = true  -- Evitar desplazamientos por barras de Roblox
-
--- Logo minimizado
-local logoImage = Instance.new("ImageButton")
-logoImage.Name = "LogoImage"
-logoImage.Size = UDim2.new(0, 50, 0, 50)
-logoImage.Position = UDim2.new(0, 100, 0, 100)
-logoImage.AnchorPoint = Vector2.new(0.5, 0.5) -- centrado
-logoImage.BackgroundTransparency = 1
-logoImage.Image = "rbxassetid://119268860825586"
-logoImage.Visible = false
-logoImage.Parent = screenGui
-logoImage.ZIndex = 999999
-
-local logoUICorner = Instance.new("UICorner")
-logoUICorner.CornerRadius = UDim.new(1, 0)
-logoUICorner.Parent = logoImage
-
-local draggingLogo = false
-
-logoImage.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        draggingLogo = true
-    end
-end)
-
-UserInputService.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        draggingLogo = false
-    end
-end)
-
-UserInputService.InputChanged:Connect(function(input)
-    if draggingLogo and input.UserInputType == Enum.UserInputType.MouseMovement then
-        local mouse = UserInputService:GetMouseLocation()
-        -- Ajustar para que no quede fuera de pantalla
-        local x = math.clamp(mouse.X, 25, workspace.CurrentCamera.ViewportSize.X - 25)
-        local y = math.clamp(mouse.Y, 25, workspace.CurrentCamera.ViewportSize.Y - 25)
-        logoImage.Position = UDim2.new(0, x, 0, y)
-        savedPosition = logoImage.Position
-    end
-end)
-
--- Asegúrate que mainFrame tenga color visible
-mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)  -- No negro absoluto, para que no parezca negro total
-
--- Guardar posición del mainFrame cuando se termine de mover
-local draggingMain, dragStart, startPos
 local savedMainPosition = mainFrame.Position
+local savedLogoPosition = UDim2.new(0, 100, 0, 100)
 
-mainFrame.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        draggingMain = true
-        dragStart = input.Position
-        startPos = mainFrame.Position
-    end
-end)
-
-UserInputService.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        draggingMain = false
-        savedMainPosition = mainFrame.Position
-    end
-end)
-
-UserInputService.InputChanged:Connect(function(input)
-    if draggingMain and input.UserInputType == Enum.UserInputType.MouseMovement then
-        local delta = input.Position - dragStart
-        mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-    end
-end)
-
--- Minimizar y restaurar sin mover la posición del mainFrame
-
-minimizeButton.MouseButton1Click:Connect(function()
-    minimized = not minimized
-    if minimized then
-        mainFrame.Visible = false
-        logoImage.Visible = true
-        logoImage.Position = savedPosition or logoImage.Position
-    else
-        logoImage.Visible = false
-        mainFrame.Visible = true
-        mainFrame.Position = savedMainPosition or mainFrame.Position
-    end
-end)
-
-logoImage.MouseButton1Click:Connect(function()
-    minimized = false
-    logoImage.Visible = false
-    mainFrame.Visible = true
-    mainFrame.Position = savedMainPosition or mainFrame.Position
-end)
-
-
--- Hacer movible el mainFrame
-local draggingMain, dragInput, startPos, dragStart
-mainFrame.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        draggingMain = true
-        dragStart = input.Position
-        startPos = mainFrame.Position
-    end
-end)
-
-UserInputService.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        draggingMain = false
-    end
-end)
-
-UserInputService.InputChanged:Connect(function(input)
-    if draggingMain and input.UserInputType == Enum.UserInputType.MouseMovement then
-        local delta = input.Position - dragStart
-        mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-    end
-end)
-
--- FUNCION PARA CREAR BOTONES
+-- BOTONES DE CONTROL
 local function createButton(parent, text, size, position, color)
     local btn = Instance.new("TextButton", parent)
     btn.Name = text:gsub("%s", "") .. "Button"
@@ -166,7 +50,6 @@ local function createButton(parent, text, size, position, color)
     return btn
 end
 
--- BOTONES DE CONTROL
 local closeButton = createButton(mainFrame, "X", UDim2.new(0, 30, 0, 30), UDim2.new(1, -35, 0, 5), Color3.fromRGB(255, 0, 0))
 local minimizeButton = createButton(mainFrame, "-", UDim2.new(0, 30, 0, 30), UDim2.new(1, -70, 0, 5), Color3.fromRGB(200, 200, 200))
 local toggleESPButton = createButton(mainFrame, "Disable ESP", UDim2.new(0.8, 0, 0, 30), UDim2.new(0.1, 0, 0.30, 0), Color3.fromRGB(200, 200, 200))
@@ -174,24 +57,99 @@ local toggleTeamButton = createButton(mainFrame, "Ignore teammates: OFF", UDim2.
 local toggleAimbotButton = createButton(mainFrame, "Enable Aimbot", UDim2.new(0.8, 0, 0, 30), UDim2.new(0.1, 0, 0.70, 0), Color3.fromRGB(200, 200, 200))
 local aimbotKeyButton = createButton(mainFrame, "Change Aimbot Key", UDim2.new(0.8, 0, 0, 30), UDim2.new(0.1, 0, 0.90, 0), Color3.fromRGB(100, 100, 255))
 
--- Minimizar
-minimizeButton.MouseButton1Click:Connect(function()
-    minimized = true
-    mainFrame.Visible = false
-    logoImage.Position = savedPosition
-    logoImage.Visible = true
+-- Logo minimizado
+local logoImage = Instance.new("ImageButton")
+logoImage.Name = "LogoImage"
+logoImage.Size = UDim2.new(0, 50, 0, 50)
+logoImage.Position = savedLogoPosition
+logoImage.AnchorPoint = Vector2.new(0.5, 0.5)
+logoImage.BackgroundTransparency = 1
+logoImage.Image = "rbxassetid://119268860825586"
+logoImage.Visible = false
+logoImage.Parent = screenGui
+logoImage.ZIndex = 999999
+
+local logoUICorner = Instance.new("UICorner", logoImage)
+logoUICorner.CornerRadius = UDim.new(1, 0)
+
+-- DRAGGING PARA MAINFRAME
+local draggingMain = false
+local dragStartMain
+local startPosMain
+
+mainFrame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        draggingMain = true
+        dragStartMain = input.Position
+        startPosMain = mainFrame.Position
+    end
 end)
 
--- Restaurar desde minimizado
-logoImage.MouseButton1Click:Connect(function()
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        draggingMain = false
+        savedMainPosition = mainFrame.Position
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if draggingMain and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local delta = input.Position - dragStartMain
+        mainFrame.Position = UDim2.new(
+            startPosMain.X.Scale, startPosMain.X.Offset + delta.X,
+            startPosMain.Y.Scale, startPosMain.Y.Offset + delta.Y
+        )
+    end
+end)
+
+-- DRAGGING PARA LOGO
+local draggingLogo = false
+local dragStartLogo
+
+logoImage.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        draggingLogo = true
+        dragStartLogo = input.Position - Vector2.new(logoImage.AbsolutePosition.X, logoImage.AbsolutePosition.Y)
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        draggingLogo = false
+        savedLogoPosition = logoImage.Position
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if draggingLogo and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local mouse = UserInputService:GetMouseLocation()
+        -- Ajustar para que no quede fuera de pantalla
+        local x = math.clamp(mouse.X - dragStartLogo.X, 25, workspace.CurrentCamera.ViewportSize.X - 25)
+        local y = math.clamp(mouse.Y - dragStartLogo.Y, 25, workspace.CurrentCamera.ViewportSize.Y - 25)
+        logoImage.Position = UDim2.new(0, x, 0, y)
+        savedLogoPosition = logoImage.Position
+    end
+end)
+
+-- FUNCIONES DE MINIMIZAR/RESTABLECER
+local function minimizeGui()
+    minimized = true
+    mainFrame.Visible = false
+    logoImage.Position = savedLogoPosition
+    logoImage.Visible = true
+end
+
+local function restoreGui()
     minimized = false
     logoImage.Visible = false
     mainFrame.Visible = true
-    mainFrame.Position = savedPosition
-end)
+    mainFrame.Position = savedMainPosition
+end
 
+minimizeButton.MouseButton1Click:Connect(minimizeGui)
+logoImage.MouseButton1Click:Connect(restoreGui)
 
--- CÍRCULO DE FOV
+-- FOV CIRCLE
 local fovCircle = Drawing.new("Circle")
 fovCircle.Color = Color3.fromRGB(255, 0, 0)
 fovCircle.Thickness = 1
@@ -201,110 +159,13 @@ fovCircle.Transparency = 1
 fovCircle.Visible = false
 fovCircle.Filled = false
 
--- FUNCIONES ESP
-local function addHighlight(character)
-    if highlighted[character] or not espEnabled then return end
-    local player = Players:GetPlayerFromCharacter(character)
-    if not player or (ignoreTeammates and player.Team == LocalPlayer.Team) then return end
+-- FUNCIONES ESP, AIMBOT, ETC...
+-- (Aquí va el resto de tu código tal cual, sin cambios)
 
-    local hl = Instance.new("Highlight")
-    hl.Name = "ClientHighlight"
-    hl.Adornee = character
-    hl.FillTransparency = 1
-    hl.OutlineTransparency = 0
-    hl.Parent = character
-    highlighted[character] = hl
-end
+-- Recuerda colocar el resto de funciones y eventos debajo de este bloque
 
-local function removeHighlight(character)
-    local hl = highlighted[character]
-    if hl then
-        hl:Destroy()
-        highlighted[character] = nil
-    end
-end
+-- EVENTOS BOTONES
 
-local function isVisible(character)
-    if not character or not character:FindFirstChild("Head") then return false end
-    local origin = Camera.CFrame.Position
-    local direction = (character.Head.Position - origin)
-    local params = RaycastParams.new()
-    params.FilterDescendantsInstances = {LocalPlayer.Character}
-    params.FilterType = Enum.RaycastFilterType.Blacklist
-    local result = workspace:Raycast(origin, direction, params)
-    return (not result or result.Instance:IsDescendantOf(character))
-end
-
-local function updateHighlightColors()
-    for character, hl in pairs(highlighted) do
-        if character and hl and character:FindFirstChild("Head") then
-            if isVisible(character) then
-                hl.OutlineColor = Color3.fromRGB(0, 255, 0)
-            else
-                hl.OutlineColor = Color3.fromRGB(255, 0, 0)
-            end
-        end
-    end
-end
-
-local function refreshESP()
-    for char in pairs(highlighted) do
-        removeHighlight(char)
-    end
-    for _, p in ipairs(Players:GetPlayers()) do
-        if p ~= LocalPlayer and p.Character then
-            addHighlight(p.Character)
-        end
-    end
-end
-
--- AIMBOT
-local function getClosestTarget()
-    local closest = nil
-    local shortest = math.huge
-    for _, player in ipairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Head") then
-            if not ignoreTeammates or player.Team ~= LocalPlayer.Team then
-                local head = player.Character.Head
-                local screenPoint, onScreen = Camera:WorldToViewportPoint(head.Position)
-                if onScreen and isVisible(player.Character) then
-                    local mousePos = UserInputService:GetMouseLocation()
-                    local distance = (Vector2.new(screenPoint.X, screenPoint.Y) - Vector2.new(mousePos.X, mousePos.Y)).Magnitude
-                    if distance < fovRadius and distance < shortest then
-                        closest = head
-                        shortest = distance
-                    end
-                end
-            end
-        end
-    end
-    return closest
-end
-
-local function aimAtTarget(target)
-    if not target then return end
-    local screenPoint = Camera:WorldToViewportPoint(target.Position)
-    local mousePos = UserInputService:GetMouseLocation()
-    local aimPos = Vector2.new(screenPoint.X, screenPoint.Y)
-    local move = (aimPos - Vector2.new(mousePos.X, mousePos.Y)) * smoothing
-    mousemoverel(move.X, move.Y)
-end
-
--- INPUT
-UserInputService.InputBegan:Connect(function(input, processed)
-    if processed then return end
-    if input.UserInputType == aimbotKey then
-        aimbotHold = true
-    end
-end)
-
-UserInputService.InputEnded:Connect(function(input)
-    if input.UserInputType == aimbotKey then
-        aimbotHold = false
-    end
-end)
-
--- EVENTOS
 closeButton.MouseButton1Click:Connect(function()
     espEnabled = false
     aimbotEnabled = false
@@ -343,6 +204,7 @@ aimbotKeyButton.MouseButton1Click:Connect(function()
     end)
 end)
 
+-- Lógica de ESP para jugadores que ingresan
 for _, player in ipairs(Players:GetPlayers()) do
     if player ~= LocalPlayer then
         player.CharacterAdded:Connect(function(char)
@@ -355,7 +217,7 @@ for _, player in ipairs(Players:GetPlayers()) do
     end
 end
 
--- RENDER LOOP
+-- Render loop
 RunService.RenderStepped:Connect(function()
     if espEnabled then
         updateHighlightColors()
