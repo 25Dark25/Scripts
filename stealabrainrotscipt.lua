@@ -73,18 +73,19 @@ local function isVisible(character)
 
     local head = character.Head
     local origin = Camera.CFrame.Position
-    local direction = (head.Position - origin)
+    local direction = head.Position - origin
 
     local raycastParams = RaycastParams.new()
     raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
     raycastParams.FilterDescendantsInstances = {
-        LocalPlayer.Character
+        LocalPlayer.Character,
+        Camera
     }
     raycastParams.IgnoreWater = true
 
     local result = workspace:Raycast(origin, direction, raycastParams)
 
-    -- Si no impacta nada, o impacta el enemigo, está visible
+    -- El jugador es visible si no hay colisión o si la colisión es con el propio personaje
     return not result or result.Instance:IsDescendantOf(character)
 end
 
