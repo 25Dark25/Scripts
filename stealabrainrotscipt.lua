@@ -32,6 +32,86 @@ mainFrame.Size = UDim2.new(0, 250, 0, 200)
 mainFrame.Position = UDim2.new(0.5, -125, 0.5, -100)
 mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 
+local minimized = false
+local savedPosition = mainFrame.Position
+
+-- Crear el logo redondo que se muestra al minimizar
+local logoImage = Instance.new("ImageButton")
+logoImage.Name = "LogoImage"
+logoImage.Size = UDim2.new(0, 50, 0, 50)
+logoImage.Position = savedPosition
+logoImage.BackgroundTransparency = 1
+logoImage.Image = "rbxassetid://119268860825586"
+logoImage.Visible = false
+logoImage.Parent = screenGui
+logoImage.ZIndex = 999999 -- Asegura que esté encima
+
+-- Hacerlo redondo
+local logoUICorner = Instance.new("UICorner")
+logoUICorner.CornerRadius = UDim.new(1, 0)
+logoUICorner.Parent = logoImage
+
+-- Permitir mover el logo
+local dragging, offset
+logoImage.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        offset = input.Position - logoImage.AbsolutePosition
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = false
+        savedPosition = logoImage.Position
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+        logoImage.Position = UDim2.new(0, input.Position.X - offset.X, 0, input.Position.Y - offset.Y)
+    end
+end)
+
+-- Hacer movible el mainFrame
+local draggingMain, dragInput, startPos, dragStart
+mainFrame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        draggingMain = true
+        dragStart = input.Position
+        startPos = mainFrame.Position
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        draggingMain = false
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if draggingMain and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local delta = input.Position - dragStart
+        mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+end)
+
+-- Minimizar botón modificado:
+minimizeButton.MouseButton1Click:Connect(function()
+    minimized = not minimized
+    mainFrame.Visible = not minimized
+    logoImage.Visible = minimized
+    logoImage.Position = savedPosition
+end)
+
+-- Click en el logo para restaurar
+logoImage.MouseButton1Click:Connect(function()
+    minimized = false
+    logoImage.Visible = false
+    mainFrame.Visible = true
+    mainFrame.Position = logoImage.Position
+end)
+
 -- FUNCION PARA CREAR BOTONES
 local function createButton(parent, text, size, position, color)
     local btn = Instance.new("TextButton", parent)
@@ -177,10 +257,6 @@ closeButton.MouseButton1Click:Connect(function()
     screenGui:Destroy()
 end)
 
-minimizeButton.MouseButton1Click:Connect(function()
-    mainFrame.Visible = false
-end)
-
 toggleESPButton.MouseButton1Click:Connect(function()
     espEnabled = not espEnabled
     toggleESPButton.Text = espEnabled and "Disable ESP" or "Enable ESP"
@@ -233,6 +309,7 @@ RunService.RenderStepped:Connect(function()
         aimAtTarget(target)
     end
     local mousePos = UserInputService:GetMouseLocation()
-    fovCircle.Position = Vector2.new(mousePos.X, mousePos.Y)
+    local viewportSize = Camera.ViewportSize
+    fovCircle.Position = Vector2.new(viewportSize.X / 2, viewportSize.Y / 2)
     fovCircle.Radius = fovRadius
 end)
