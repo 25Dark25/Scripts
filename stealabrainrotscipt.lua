@@ -1,6 +1,9 @@
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local LocalPlayer = Players.LocalPlayer
+local RunService = game:GetService("RunService")
+local Camera = workspace.CurrentCamera
+
 
 local espEnabled = true
 local ignoreTeammates = false
@@ -54,18 +57,46 @@ corner.CornerRadius = UDim.new(1, 0)
 local function addHighlight(character)
     if highlighted[character] or not espEnabled then return end
     local player = Players:GetPlayerFromCharacter(character)
-    if not player or player == LocalPlayer then return end
-    if ignoreTeammates and player.Team == LocalPlayer.Team then return end
+    if not player or (ignoreTeammates and player.Team == LocalPlayer.Team) then return end
 
     local hl = Instance.new("Highlight")
     hl.Name = "ClientHighlight"
     hl.Adornee = character
     hl.FillTransparency = 1
     hl.OutlineTransparency = 0
-    hl.OutlineColor = Color3.fromRGB(0, 255, 0)
     hl.Parent = character
     highlighted[character] = hl
 end
+
+local function isVisible(character)
+    if not character or not character:FindFirstChild("Head") then return false end
+    local head = character.Head
+    local origin = Camera.CFrame.Position
+    local direction = (head.Position - origin)
+
+    local raycastParams = RaycastParams.new()
+    raycastParams.FilterDescendantsInstances = {LocalPlayer.Character}
+    raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
+
+    local raycastResult = workspace:Raycast(origin, direction, raycastParams)
+
+    if not raycastResult or raycastResult.Instance:IsDescendantOf(character) then
+        return true
+    else
+        return false
+    end
+end
+
+local function updateHighlightColors()
+    for character, hl in pairs(highlighted) do
+        if isVisible(character) then
+            hl.OutlineColor = Color3.fromRGB(0, 255, 0) -- Verde si visible
+        else
+            hl.OutlineColor = Color3.fromRGB(255, 0, 0) -- Rojo si detrás de obstáculo
+        end
+    end
+end
+
 
 local function removeHighlight(character)
     local hl = highlighted[character]
@@ -218,6 +249,12 @@ local function makeDraggable(frame)
         end
     end)
 end
+
+RunService.Heartbeat:Connect(function()
+    if espEnabled then
+        updateHighlightColors()
+    end
+end)
 
 makeDraggable(mainFrame)
 makeDraggable(minimizedBar)
