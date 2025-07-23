@@ -15,7 +15,7 @@ local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "DarkGui"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
-screenGui.DisplayOrder = 1000 
+screenGui.DisplayOrder = 10000 
 
 
 -- Main Frame
