@@ -96,22 +96,6 @@ UserInputService.InputChanged:Connect(function(input)
     end
 end)
 
--- Minimizar botón modificado:
-minimizeButton.MouseButton1Click:Connect(function()
-    minimized = not minimized
-    mainFrame.Visible = not minimized
-    logoImage.Visible = minimized
-    logoImage.Position = savedPosition
-end)
-
--- Click en el logo para restaurar
-logoImage.MouseButton1Click:Connect(function()
-    minimized = false
-    logoImage.Visible = false
-    mainFrame.Visible = true
-    mainFrame.Position = logoImage.Position
-end)
-
 -- FUNCION PARA CREAR BOTONES
 local function createButton(parent, text, size, position, color)
     local btn = Instance.new("TextButton", parent)
@@ -134,6 +118,22 @@ local toggleAimbotButton = createButton(mainFrame, "Enable Aimbot", UDim2.new(0.
 
 -- CAMBIO DE TECLA AIMBOT
 local aimbotKeyButton = createButton(mainFrame, "Change Aimbot Key", UDim2.new(0.8, 0, 0, 30), UDim2.new(0.1, 0, 0.90, 0), Color3.fromRGB(100, 100, 255))
+
+-- Minimizar botón modificado:
+minimizeButton.MouseButton1Click:Connect(function()
+    minimized = not minimized
+    mainFrame.Visible = not minimized
+    logoImage.Visible = minimized
+    logoImage.Position = savedPosition
+end)
+
+-- Click en el logo para restaurar
+logoImage.MouseButton1Click:Connect(function()
+    minimized = false
+    logoImage.Visible = false
+    mainFrame.Visible = true
+    mainFrame.Position = logoImage.Position
+end)
 
 -- CÍRCULO DE FOV
 local fovCircle = Drawing.new("Circle")
