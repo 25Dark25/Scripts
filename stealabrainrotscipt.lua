@@ -28,11 +28,9 @@ screenGui.DisplayOrder = 10000
 -- FRAME PRINCIPAL
 local mainFrame = Instance.new("Frame", screenGui)
 mainFrame.Name = "MainFrame"
-mainFrame.Size = UDim2.new(0, 250, 0, 250)
-mainFrame.Position = UDim2.new(0.5, -125, 0.5, -125)
+mainFrame.Size = UDim2.new(0, 250, 0, 200)
+mainFrame.Position = UDim2.new(0.5, -125, 0.5, -100)
 mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-mainFrame.Active = true
-mainFrame.Draggable = true
 
 -- FUNCION PARA CREAR BOTONES
 local function createButton(parent, text, size, position, color)
@@ -50,14 +48,12 @@ end
 -- BOTONES DE CONTROL
 local closeButton = createButton(mainFrame, "X", UDim2.new(0, 30, 0, 30), UDim2.new(1, -35, 0, 5), Color3.fromRGB(255, 0, 0))
 local minimizeButton = createButton(mainFrame, "-", UDim2.new(0, 30, 0, 30), UDim2.new(1, -70, 0, 5), Color3.fromRGB(200, 200, 200))
-local toggleESPButton = createButton(mainFrame, "Disable ESP", UDim2.new(0.8, 0, 0, 30), UDim2.new(0.1, 0, 0.25, 0), Color3.fromRGB(200, 200, 200))
-local toggleTeamButton = createButton(mainFrame, "Ignore teammates: OFF", UDim2.new(0.8, 0, 0, 30), UDim2.new(0.1, 0, 0.40, 0), Color3.fromRGB(200, 200, 200))
-local toggleAimbotButton = createButton(mainFrame, "Enable Aimbot", UDim2.new(0.8, 0, 0, 30), UDim2.new(0.1, 0, 0.55, 0), Color3.fromRGB(200, 200, 200))
-local aimbotKeyButton = createButton(mainFrame, "Change Aimbot Key", UDim2.new(0.8, 0, 0, 30), UDim2.new(0.1, 0, 0.70, 0), Color3.fromRGB(100, 100, 255))
+local toggleESPButton = createButton(mainFrame, "Disable ESP", UDim2.new(0.8, 0, 0, 30), UDim2.new(0.1, 0, 0.30, 0), Color3.fromRGB(200, 200, 200))
+local toggleTeamButton = createButton(mainFrame, "Ignore teammates: OFF", UDim2.new(0.8, 0, 0, 30), UDim2.new(0.1, 0, 0.50, 0), Color3.fromRGB(200, 200, 200))
+local toggleAimbotButton = createButton(mainFrame, "Enable Aimbot", UDim2.new(0.8, 0, 0, 30), UDim2.new(0.1, 0, 0.70, 0), Color3.fromRGB(200, 200, 200))
 
--- NUEVOS SLIDERS PARA FOV Y SMOOTHING
-local fovSlider = createButton(mainFrame, "FOV: 100", UDim2.new(0.8, 0, 0, 30), UDim2.new(0.1, 0, 0.85, 0), Color3.fromRGB(180, 180, 180))
-local smoothSlider = createButton(mainFrame, "Smooth: 0.15", UDim2.new(0.8, 0, 0, 30), UDim2.new(0.1, 0, 1.00, 0), Color3.fromRGB(180, 180, 180))
+-- CAMBIO DE TECLA AIMBOT
+local aimbotKeyButton = createButton(mainFrame, "Change Aimbot Key", UDim2.new(0.8, 0, 0, 30), UDim2.new(0.1, 0, 0.90, 0), Color3.fromRGB(100, 100, 255))
 
 -- CÍRCULO DE FOV
 local fovCircle = Drawing.new("Circle")
@@ -68,9 +64,30 @@ fovCircle.NumSides = 64
 fovCircle.Transparency = 1
 fovCircle.Visible = false
 fovCircle.Filled = false
-fovCircle.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
 
--- FUNCIONES
+-- FUNCIONES ESP
+local function addHighlight(character)
+    if highlighted[character] or not espEnabled then return end
+    local player = Players:GetPlayerFromCharacter(character)
+    if not player or (ignoreTeammates and player.Team == LocalPlayer.Team) then return end
+
+    local hl = Instance.new("Highlight")
+    hl.Name = "ClientHighlight"
+    hl.Adornee = character
+    hl.FillTransparency = 1
+    hl.OutlineTransparency = 0
+    hl.Parent = character
+    highlighted[character] = hl
+end
+
+local function removeHighlight(character)
+    local hl = highlighted[character]
+    if hl then
+        hl:Destroy()
+        highlighted[character] = nil
+    end
+end
+
 local function isVisible(character)
     if not character or not character:FindFirstChild("Head") then return false end
     local origin = Camera.CFrame.Position
@@ -82,18 +99,45 @@ local function isVisible(character)
     return (not result or result.Instance:IsDescendantOf(character))
 end
 
+local function updateHighlightColors()
+    for character, hl in pairs(highlighted) do
+        if character and hl and character:FindFirstChild("Head") then
+            if isVisible(character) then
+                hl.OutlineColor = Color3.fromRGB(0, 255, 0)
+            else
+                hl.OutlineColor = Color3.fromRGB(255, 0, 0)
+            end
+        end
+    end
+end
+
+local function refreshESP()
+    for char in pairs(highlighted) do
+        removeHighlight(char)
+    end
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer and p.Character then
+            addHighlight(p.Character)
+        end
+    end
+end
+
+-- AIMBOT
 local function getClosestTarget()
-    local closest, shortest = nil, math.huge
+    local closest = nil
+    local shortest = math.huge
     for _, player in ipairs(Players:GetPlayers()) do
         if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Head") then
             if not ignoreTeammates or player.Team ~= LocalPlayer.Team then
                 local head = player.Character.Head
                 local screenPoint, onScreen = Camera:WorldToViewportPoint(head.Position)
-                local center = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
-                local distance = (Vector2.new(screenPoint.X, screenPoint.Y) - center).Magnitude
-                if onScreen and isVisible(player.Character) and distance < fovRadius and distance < shortest then
-                    closest = head
-                    shortest = distance
+                if onScreen and isVisible(player.Character) then
+                    local mousePos = UserInputService:GetMouseLocation()
+                    local distance = (Vector2.new(screenPoint.X, screenPoint.Y) - Vector2.new(mousePos.X, mousePos.Y)).Magnitude
+                    if distance < fovRadius and distance < shortest then
+                        closest = head
+                        shortest = distance
+                    end
                 end
             end
         end
@@ -104,53 +148,49 @@ end
 local function aimAtTarget(target)
     if not target then return end
     local screenPoint = Camera:WorldToViewportPoint(target.Position)
-    local center = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
-    local move = (Vector2.new(screenPoint.X, screenPoint.Y) - center) * smoothing
+    local mousePos = UserInputService:GetMouseLocation()
+    local aimPos = Vector2.new(screenPoint.X, screenPoint.Y)
+    local move = (aimPos - Vector2.new(mousePos.X, mousePos.Y)) * smoothing
     mousemoverel(move.X, move.Y)
 end
 
+-- INPUT
+UserInputService.InputBegan:Connect(function(input, processed)
+    if processed then return end
+    if input.UserInputType == aimbotKey then
+        aimbotHold = true
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == aimbotKey then
+        aimbotHold = false
+    end
+end)
+
 -- EVENTOS
-fovSlider.MouseButton1Click:Connect(function()
-    fovRadius = fovRadius >= 300 and 50 or fovRadius + 50
-    fovSlider.Text = "FOV: " .. fovRadius
-end)
-
-smoothSlider.MouseButton1Click:Connect(function()
-    smoothing = smoothing >= 1 and 0.05 or math.round((smoothing + 0.05) * 100) / 100
-    smoothSlider.Text = "Smooth: " .. smoothing
-end)
-
 closeButton.MouseButton1Click:Connect(function()
     espEnabled = false
     aimbotEnabled = false
-    for char in pairs(highlighted) do char:Destroy() end
+    for char in pairs(highlighted) do removeHighlight(char) end
+    for _, conn in ipairs(connections) do if conn.Connected then conn:Disconnect() end end
     screenGui:Destroy()
 end)
 
 minimizeButton.MouseButton1Click:Connect(function()
     mainFrame.Visible = false
-    local mini = Instance.new("ImageButton", screenGui)
-    mini.Name = "MinimizedBar"
-    mini.Image = "rbxassetid://119268860825586"
-    mini.Size = UDim2.new(0, 40, 0, 40)
-    mini.Position = UDim2.new(0.5, -20, 0, 10)
-    mini.BackgroundTransparency = 1
-    mini.Active = true
-    mini.Draggable = true
-    mini.MouseButton1Click:Connect(function()
-        mainFrame.Visible = true
-        mini:Destroy()
-    end)
 end)
 
 toggleESPButton.MouseButton1Click:Connect(function()
     espEnabled = not espEnabled
     toggleESPButton.Text = espEnabled and "Disable ESP" or "Enable ESP"
+    refreshESP()
 end)
 
 toggleTeamButton.MouseButton1Click:Connect(function()
     ignoreTeammates = not ignoreTeammates
     toggleTeamButton.Text = ignoreTeammates and "Ignore teammates: ON" or "Ignore teammates: OFF"
+    refreshESP()
 end)
 
 toggleAimbotButton.MouseButton1Click:Connect(function()
@@ -171,40 +211,28 @@ aimbotKeyButton.MouseButton1Click:Connect(function()
     end)
 end)
 
-UserInputService.InputBegan:Connect(function(input, processed)
-    if not processed and input.UserInputType == aimbotKey then
-        aimbotHold = true
-    end
-end)
-
-UserInputService.InputEnded:Connect(function(input)
-    if input.UserInputType == aimbotKey then
-        aimbotHold = false
-    end
-end)
-
-RunService.RenderStepped:Connect(function()
-    if espEnabled then
-        for _, player in ipairs(Players:GetPlayers()) do
-            if player ~= LocalPlayer and player.Character then
-                local character = player.Character
-                if not highlighted[character] then
-                    local hl = Instance.new("Highlight")
-                    hl.Name = "ClientHighlight"
-                    hl.Adornee = character
-                    hl.FillTransparency = 1
-                    hl.OutlineTransparency = 0
-                    hl.Parent = character
-                    highlighted[character] = hl
-                end
-                local hl = highlighted[character]
-                hl.OutlineColor = isVisible(character) and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
-            end
+for _, player in ipairs(Players:GetPlayers()) do
+    if player ~= LocalPlayer then
+        player.CharacterAdded:Connect(function(char)
+            wait(1)
+            if espEnabled then addHighlight(char) end
+        end)
+        if player.Character then
+            addHighlight(player.Character)
         end
     end
+end
 
+-- RENDER LOOP
+RunService.RenderStepped:Connect(function()
+    if espEnabled then
+        updateHighlightColors()
+    end
     if aimbotEnabled and aimbotHold then
         local target = getClosestTarget()
         aimAtTarget(target)
     end
+    local mousePos = UserInputService:GetMouseLocation()
+    fovCircle.Position = Vector2.new(mousePos.X, mousePos.Y)
+    fovCircle.Radius = fovRadius
 end)
