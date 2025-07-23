@@ -7,20 +7,19 @@ local ignoreTeammates = false
 local highlighted = {}
 local connections = {}
 
--- Create GUI
+-- GUI
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "DarkGui"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
--- Main Frame
 local mainFrame = Instance.new("Frame", screenGui)
 mainFrame.Name = "MainFrame"
 mainFrame.Size = UDim2.new(0, 250, 0, 150)
 mainFrame.Position = UDim2.new(0.5, -125, 0.5, -75)
 mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 
--- Buttons helper function
+-- Helper for buttons
 local function createButton(parent, text, size, position, color)
     local btn = Instance.new("TextButton", parent)
     btn.Name = text:gsub("%s", "") .. "Button"
@@ -38,7 +37,6 @@ local minimizeButton = createButton(mainFrame, "-", UDim2.new(0, 30, 0, 30), UDi
 local toggleESPButton = createButton(mainFrame, "Disable ESP", UDim2.new(0.8, 0, 0, 30), UDim2.new(0.1, 0, 0.45, 0), Color3.fromRGB(200, 200, 200))
 local toggleTeamButton = createButton(mainFrame, "Ignore teammates: OFF", UDim2.new(0.8, 0, 0, 30), UDim2.new(0.1, 0, 0.75, 0), Color3.fromRGB(200, 200, 200))
 
--- Minimized Bar (ImageButton with logo)
 local minimizedBar = Instance.new("ImageButton", screenGui)
 minimizedBar.Name = "MinimizedBar"
 minimizedBar.Size = UDim2.new(0, 40, 0, 40)
@@ -51,11 +49,20 @@ minimizedBar.AutoButtonColor = true
 local corner = Instance.new("UICorner", minimizedBar)
 corner.CornerRadius = UDim.new(1, 0)
 
--- Highlight functions
+-- Highlight management
+local function removeHighlight(character)
+    local hl = highlighted[character]
+    if hl then
+        hl:Destroy()
+        highlighted[character] = nil
+    end
+end
+
 local function addHighlight(character)
     if highlighted[character] or not espEnabled then return end
     local player = Players:GetPlayerFromCharacter(character)
-    if not player or (ignoreTeammates and player.Team == LocalPlayer.Team) then return end
+    if not player or player == LocalPlayer then return end
+    if ignoreTeammates and player.Team == LocalPlayer.Team then return end
 
     local hl = Instance.new("Highlight")
     hl.Name = "ClientHighlight"
@@ -67,11 +74,12 @@ local function addHighlight(character)
     highlighted[character] = hl
 end
 
-local function removeHighlight(character)
-    local hl = highlighted[character]
-    if hl then
-        hl:Destroy()
-        highlighted[character] = nil
+local function refreshESP()
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character then
+            removeHighlight(player.Character)
+            addHighlight(player.Character)
+        end
     end
 end
 
@@ -86,23 +94,22 @@ end
 
 local function onPlayerAdded(player)
     if player == LocalPlayer then return end
-    player.CharacterAdded:Connect(onCharacterAdded)
+    table.insert(connections, player.CharacterAdded:Connect(onCharacterAdded))
     if player.Character then
         onCharacterAdded(player.Character)
     end
 end
 
+-- Main toggle logic
 local function toggleESP()
     espEnabled = not espEnabled
     toggleESPButton.Text = espEnabled and "Disable ESP" or "Enable ESP"
-    if not espEnabled then
-        for char in pairs(highlighted) do
-            removeHighlight(char)
-        end
+    if espEnabled then
+        refreshESP()
     else
-        for _, p in ipairs(Players:GetPlayers()) do
-            if p ~= LocalPlayer and p.Character then
-                addHighlight(p.Character)
+        for _, player in ipairs(Players:GetPlayers()) do
+            if player.Character then
+                removeHighlight(player.Character)
             end
         end
     end
@@ -110,8 +117,10 @@ end
 
 local function cleanup()
     espEnabled = false
-    for char in pairs(highlighted) do
-        removeHighlight(char)
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player.Character then
+            removeHighlight(player.Character)
+        end
     end
     for _, conn in ipairs(connections) do
         if conn.Connected then
@@ -138,17 +147,18 @@ toggleESPButton.MouseButton1Click:Connect(toggleESP)
 toggleTeamButton.MouseButton1Click:Connect(function()
     ignoreTeammates = not ignoreTeammates
     toggleTeamButton.Text = ignoreTeammates and "Ignore teammates: ON" or "Ignore teammates: OFF"
-    toggleESP()
-    toggleESP()
+    if espEnabled then
+        refreshESP()
+    end
 end)
 
--- Connect players
+-- Connect all current and future players
 table.insert(connections, Players.PlayerAdded:Connect(onPlayerAdded))
 for _, p in ipairs(Players:GetPlayers()) do
     onPlayerAdded(p)
 end
 
--- Make draggable
+-- Make GUI draggable
 local function makeDraggable(frame)
     local dragging = false
     local dragInput = nil
