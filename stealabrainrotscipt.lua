@@ -37,17 +37,20 @@ local minimizeButton = createButton(mainFrame, "-", UDim2.new(0, 30, 0, 30), UDi
 local toggleESPButton = createButton(mainFrame, "Disable ESP", UDim2.new(0.8, 0, 0, 40), UDim2.new(0.1, 0, 0.5, 0), Color3.fromRGB(200, 200, 200))
 
 -- Minimized Bar (Image Logo)
+-- Minimized Icon Button (logo)
 local minimizedBar = Instance.new("ImageButton", screenGui)
 minimizedBar.Name = "MinimizedBar"
+minimizedBar.Image = "rbxassetid://119268860825586"
 minimizedBar.Size = UDim2.new(0, 50, 0, 50)
-minimizedBar.Position = UDim2.new(0.5, -25, 0, 10) -- centered top
-minimizedBar.BackgroundTransparency = 1
-minimizedBar.Image = "rbxassetid://92528832203499" -- Replace with your image ID
+minimizedBar.Position = UDim2.new(0.5, -25, 0, 10)
+minimizedBar.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 minimizedBar.Visible = false
 minimizedBar.AutoButtonColor = true
-minimizedBar.ScaleType = Enum.ScaleType.Fit
-minimizedBar.ClipsDescendants = true
-minimizedBar.ImageColor3 = Color3.new(1, 1, 1) -- optional tint
+
+-- Rounded style
+local corner = Instance.new("UICorner", minimizedBar)
+corner.CornerRadius = UDim.new(1, 0)
+
 
 -- Hacer el logo redondo
 local round = Instance.new("UICorner")
