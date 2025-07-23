@@ -115,11 +115,9 @@ local minimizeButton = createButton(mainFrame, "-", UDim2.new(0, 30, 0, 30), UDi
 local toggleESPButton = createButton(mainFrame, "Disable ESP", UDim2.new(0.8, 0, 0, 30), UDim2.new(0.1, 0, 0.30, 0), Color3.fromRGB(200, 200, 200))
 local toggleTeamButton = createButton(mainFrame, "Ignore teammates: OFF", UDim2.new(0.8, 0, 0, 30), UDim2.new(0.1, 0, 0.50, 0), Color3.fromRGB(200, 200, 200))
 local toggleAimbotButton = createButton(mainFrame, "Enable Aimbot", UDim2.new(0.8, 0, 0, 30), UDim2.new(0.1, 0, 0.70, 0), Color3.fromRGB(200, 200, 200))
-
--- CAMBIO DE TECLA AIMBOT
 local aimbotKeyButton = createButton(mainFrame, "Change Aimbot Key", UDim2.new(0.8, 0, 0, 30), UDim2.new(0.1, 0, 0.90, 0), Color3.fromRGB(100, 100, 255))
 
--- Minimizar botón modificado:
+-- AHORA conectamos los botones
 minimizeButton.MouseButton1Click:Connect(function()
     minimized = not minimized
     mainFrame.Visible = not minimized
@@ -127,7 +125,6 @@ minimizeButton.MouseButton1Click:Connect(function()
     logoImage.Position = savedPosition
 end)
 
--- Click en el logo para restaurar
 logoImage.MouseButton1Click:Connect(function()
     minimized = false
     logoImage.Visible = false
@@ -308,7 +305,6 @@ RunService.RenderStepped:Connect(function()
         local target = getClosestTarget()
         aimAtTarget(target)
     end
-    local mousePos = UserInputService:GetMouseLocation()
     local viewportSize = Camera.ViewportSize
     fovCircle.Position = Vector2.new(viewportSize.X / 2, viewportSize.Y / 2)
     fovCircle.Radius = fovRadius
