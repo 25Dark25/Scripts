@@ -44,14 +44,12 @@ logoImage.BackgroundTransparency = 1
 logoImage.Image = "rbxassetid://119268860825586"
 logoImage.Visible = false
 logoImage.Parent = screenGui
-logoImage.ZIndex = 999999 -- Asegura que esté encima
+logoImage.ZIndex = 999999
 
--- Hacerlo redondo
 local logoUICorner = Instance.new("UICorner")
 logoUICorner.CornerRadius = UDim.new(1, 0)
 logoUICorner.Parent = logoImage
 
--- Permitir mover el logo
 local dragging, offset
 logoImage.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
@@ -117,7 +115,7 @@ local toggleTeamButton = createButton(mainFrame, "Ignore teammates: OFF", UDim2.
 local toggleAimbotButton = createButton(mainFrame, "Enable Aimbot", UDim2.new(0.8, 0, 0, 30), UDim2.new(0.1, 0, 0.70, 0), Color3.fromRGB(200, 200, 200))
 local aimbotKeyButton = createButton(mainFrame, "Change Aimbot Key", UDim2.new(0.8, 0, 0, 30), UDim2.new(0.1, 0, 0.90, 0), Color3.fromRGB(100, 100, 255))
 
--- AHORA conectamos los botones
+-- FUNCIONALIDAD DE LOS BOTONES
 minimizeButton.MouseButton1Click:Connect(function()
     minimized = not minimized
     mainFrame.Visible = not minimized
