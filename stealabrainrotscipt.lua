@@ -40,7 +40,7 @@ local logoImage = Instance.new("ImageButton")
 logoImage.Name = "LogoImage"
 logoImage.Size = UDim2.new(0, 50, 0, 50)
 logoImage.Position = UDim2.new(0, 100, 0, 100)
-logoImage.AnchorPoint = Vector2.new(0.5, 0.5)
+logoImage.AnchorPoint = Vector2.new(0.5, 0.5) -- Centrar el anclaje
 logoImage.BackgroundTransparency = 1
 logoImage.Image = "rbxassetid://119268860825586"
 logoImage.Visible = false
@@ -51,28 +51,30 @@ local logoUICorner = Instance.new("UICorner")
 logoUICorner.CornerRadius = UDim.new(1, 0)
 logoUICorner.Parent = logoImage
 
--- Movimiento del logo
-local dragging, offset
+-- Movimiento del logo (ajustado para mover desde el centro del mouse)
+local draggingLogo = false
+
 logoImage.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = true
-        offset = Vector2.new(input.Position.X, input.Position.Y) - Vector2.new(logoImage.AbsolutePosition.X, logoImage.AbsolutePosition.Y)
+        draggingLogo = true
     end
 end)
 
 UserInputService.InputEnded:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = false
+        draggingLogo = false
     end
 end)
 
 UserInputService.InputChanged:Connect(function(input)
-    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-        local newPos = Vector2.new(input.Position.X, input.Position.Y) - offset
-        logoImage.Position = UDim2.new(0, newPos.X, 0, newPos.Y)
+    if draggingLogo and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local mouse = UserInputService:GetMouseLocation()
+        local x, y = mouse.X, mouse.Y
+        logoImage.Position = UDim2.new(0, x, 0, y)
         savedPosition = logoImage.Position
     end
 end)
+
 
 
 -- Hacer movible el mainFrame
