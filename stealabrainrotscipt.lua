@@ -1,28 +1,38 @@
+-- SERVICIOS Y VARIABLES PRINCIPALES
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
-local LocalPlayer = Players.LocalPlayer
 local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
-
+-- ESTADOS
 local espEnabled = true
+local aimbotEnabled = false
 local ignoreTeammates = false
+local aimbotKey = Enum.UserInputType.MouseButton2
+local aimbotHold = false
+local smoothing = 0.15
+local fovRadius = 100
+
+-- TRACKING
 local highlighted = {}
 local connections = {}
 
+-- GUI PRINCIPAL
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "DarkGui"
 screenGui.ResetOnSpawn = false
 screenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
-screenGui.DisplayOrder = 10000 
+screenGui.DisplayOrder = 10000
 
-
+-- FRAME PRINCIPAL
 local mainFrame = Instance.new("Frame", screenGui)
 mainFrame.Name = "MainFrame"
-mainFrame.Size = UDim2.new(0, 250, 0, 150)
-mainFrame.Position = UDim2.new(0.5, -125, 0.5, -75)
+mainFrame.Size = UDim2.new(0, 250, 0, 200)
+mainFrame.Position = UDim2.new(0.5, -125, 0.5, -100)
 mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 
+-- FUNCION PARA CREAR BOTONES
 local function createButton(parent, text, size, position, color)
     local btn = Instance.new("TextButton", parent)
     btn.Name = text:gsub("%s", "") .. "Button"
@@ -35,23 +45,27 @@ local function createButton(parent, text, size, position, color)
     return btn
 end
 
+-- BOTONES DE CONTROL
 local closeButton = createButton(mainFrame, "X", UDim2.new(0, 30, 0, 30), UDim2.new(1, -35, 0, 5), Color3.fromRGB(255, 0, 0))
 local minimizeButton = createButton(mainFrame, "-", UDim2.new(0, 30, 0, 30), UDim2.new(1, -70, 0, 5), Color3.fromRGB(200, 200, 200))
-local toggleESPButton = createButton(mainFrame, "Disable ESP", UDim2.new(0.8, 0, 0, 30), UDim2.new(0.1, 0, 0.45, 0), Color3.fromRGB(200, 200, 200))
-local toggleTeamButton = createButton(mainFrame, "Ignore teammates: OFF", UDim2.new(0.8, 0, 0, 30), UDim2.new(0.1, 0, 0.75, 0), Color3.fromRGB(200, 200, 200))
+local toggleESPButton = createButton(mainFrame, "Disable ESP", UDim2.new(0.8, 0, 0, 30), UDim2.new(0.1, 0, 0.30, 0), Color3.fromRGB(200, 200, 200))
+local toggleTeamButton = createButton(mainFrame, "Ignore teammates: OFF", UDim2.new(0.8, 0, 0, 30), UDim2.new(0.1, 0, 0.50, 0), Color3.fromRGB(200, 200, 200))
+local toggleAimbotButton = createButton(mainFrame, "Enable Aimbot", UDim2.new(0.8, 0, 0, 30), UDim2.new(0.1, 0, 0.70, 0), Color3.fromRGB(200, 200, 200))
 
-local minimizedBar = Instance.new("ImageButton", screenGui)
-minimizedBar.Name = "MinimizedBar"
-minimizedBar.Size = UDim2.new(0, 40, 0, 40)
-minimizedBar.Position = UDim2.new(0.5, -20, 0, 10)
-minimizedBar.BackgroundTransparency = 1
-minimizedBar.Image = "rbxassetid://119268860825586"
-minimizedBar.Visible = false
-minimizedBar.AutoButtonColor = true
+-- CAMBIO DE TECLA AIMBOT
+local aimbotKeyButton = createButton(mainFrame, "Change Aimbot Key", UDim2.new(0.8, 0, 0, 30), UDim2.new(0.1, 0, 0.90, 0), Color3.fromRGB(100, 100, 255))
 
-local corner = Instance.new("UICorner", minimizedBar)
-corner.CornerRadius = UDim.new(1, 0)
+-- CÍRCULO DE FOV
+local fovCircle = Drawing.new("Circle")
+fovCircle.Color = Color3.fromRGB(255, 0, 0)
+fovCircle.Thickness = 1
+fovCircle.Radius = fovRadius
+fovCircle.NumSides = 64
+fovCircle.Transparency = 1
+fovCircle.Visible = false
+fovCircle.Filled = false
 
+-- FUNCIONES ESP
 local function addHighlight(character)
     if highlighted[character] or not espEnabled then return end
     local player = Players:GetPlayerFromCharacter(character)
@@ -66,40 +80,6 @@ local function addHighlight(character)
     highlighted[character] = hl
 end
 
-local function isVisible(character)
-    if not character or not character:FindFirstChild("Head") then return false end
-
-    local head = character.Head
-    local origin = Camera.CFrame.Position
-    local direction = (head.Position - origin).Unit * (head.Position - origin).Magnitude
-
-    local raycastParams = RaycastParams.new()
-    raycastParams.FilterDescendantsInstances = {LocalPlayer.Character}
-    raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
-
-    local result = workspace:Raycast(origin, direction, raycastParams)
-    return (not result or result.Instance:IsDescendantOf(character))
-end
-
-
-local function updateHighlightColors()
-    for character, hl in pairs(highlighted) do
-        if character and hl and character:FindFirstChild("Head") then
-            if isVisible(character) then
-                if hl.OutlineColor ~= Color3.fromRGB(0, 255, 0) then
-                    hl.OutlineColor = Color3.fromRGB(0, 255, 0)
-                end
-            else
-                if hl.OutlineColor ~= Color3.fromRGB(255, 0, 0) then
-                    hl.OutlineColor = Color3.fromRGB(255, 0, 0)
-                end
-            end
-        end
-    end
-end
-
-
-
 local function removeHighlight(character)
     local hl = highlighted[character]
     if hl then
@@ -108,33 +88,27 @@ local function removeHighlight(character)
     end
 end
 
-local function onCharacterAdded(character)
-    local humanoid = character:WaitForChild("Humanoid", 5)
-    if not humanoid then return end
-
-    if espEnabled then
-        addHighlight(character)
-    end
-
-    humanoid.Died:Connect(function()
-        removeHighlight(character)
-    end)
+local function isVisible(character)
+    if not character or not character:FindFirstChild("Head") then return false end
+    local origin = Camera.CFrame.Position
+    local direction = (character.Head.Position - origin)
+    local params = RaycastParams.new()
+    params.FilterDescendantsInstances = {LocalPlayer.Character}
+    params.FilterType = Enum.RaycastFilterType.Blacklist
+    local result = workspace:Raycast(origin, direction, params)
+    return (not result or result.Instance:IsDescendantOf(character))
 end
 
-local function onPlayerAdded(player)
-    if player == LocalPlayer then return end
-
-    player.CharacterAdded:Connect(onCharacterAdded)
-
-    if player.Character then
-        onCharacterAdded(player.Character)
-    end
-
-    player:GetPropertyChangedSignal("Team"):Connect(function()
-        if espEnabled then
-            refreshESP()
+local function updateHighlightColors()
+    for character, hl in pairs(highlighted) do
+        if character and hl and character:FindFirstChild("Head") then
+            if isVisible(character) then
+                hl.OutlineColor = Color3.fromRGB(0, 255, 0)
+            else
+                hl.OutlineColor = Color3.fromRGB(255, 0, 0)
+            end
         end
-    end)
+    end
 end
 
 local function refreshESP()
@@ -148,108 +122,117 @@ local function refreshESP()
     end
 end
 
-
-local function toggleESP()
-    espEnabled = not espEnabled
-    toggleESPButton.Text = espEnabled and "Disable ESP" or "Enable ESP"
-    if not espEnabled then
-        for char in pairs(highlighted) do
-            removeHighlight(char)
-        end
-    else
-        for _, p in ipairs(Players:GetPlayers()) do
-            if p ~= LocalPlayer and p.Character then
-                addHighlight(p.Character)
+-- AIMBOT
+local function getClosestTarget()
+    local closest = nil
+    local shortest = math.huge
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Head") then
+            if not ignoreTeammates or player.Team ~= LocalPlayer.Team then
+                local head = player.Character.Head
+                local screenPoint, onScreen = Camera:WorldToViewportPoint(head.Position)
+                if onScreen and isVisible(player.Character) then
+                    local mousePos = UserInputService:GetMouseLocation()
+                    local distance = (Vector2.new(screenPoint.X, screenPoint.Y) - Vector2.new(mousePos.X, mousePos.Y)).Magnitude
+                    if distance < fovRadius and distance < shortest then
+                        closest = head
+                        shortest = distance
+                    end
+                end
             end
         end
     end
+    return closest
 end
 
-local function cleanup()
+local function aimAtTarget(target)
+    if not target then return end
+    local screenPoint = Camera:WorldToViewportPoint(target.Position)
+    local mousePos = UserInputService:GetMouseLocation()
+    local aimPos = Vector2.new(screenPoint.X, screenPoint.Y)
+    local move = (aimPos - Vector2.new(mousePos.X, mousePos.Y)) * smoothing
+    mousemoverel(move.X, move.Y)
+end
+
+-- INPUT
+UserInputService.InputBegan:Connect(function(input, processed)
+    if processed then return end
+    if input.UserInputType == aimbotKey then
+        aimbotHold = true
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == aimbotKey then
+        aimbotHold = false
+    end
+end)
+
+-- EVENTOS
+closeButton.MouseButton1Click:Connect(function()
     espEnabled = false
-    for char in pairs(highlighted) do
-        removeHighlight(char)
-    end
-    for _, conn in ipairs(connections) do
-        if conn.Connected then
-            conn:Disconnect()
-        end
-    end
-    connections = {}
-    if screenGui and screenGui.Parent then
-        screenGui:Destroy()
-    end
-end
+    aimbotEnabled = false
+    for char in pairs(highlighted) do removeHighlight(char) end
+    for _, conn in ipairs(connections) do if conn.Connected then conn:Disconnect() end end
+    screenGui:Destroy()
+end)
 
-closeButton.MouseButton1Click:Connect(cleanup)
 minimizeButton.MouseButton1Click:Connect(function()
     mainFrame.Visible = false
-    minimizedBar.Visible = true
 end)
-minimizedBar.MouseButton1Click:Connect(function()
-    mainFrame.Visible = true
-    minimizedBar.Visible = false
+
+toggleESPButton.MouseButton1Click:Connect(function()
+    espEnabled = not espEnabled
+    toggleESPButton.Text = espEnabled and "Disable ESP" or "Enable ESP"
+    refreshESP()
 end)
-toggleESPButton.MouseButton1Click:Connect(toggleESP)
+
 toggleTeamButton.MouseButton1Click:Connect(function()
     ignoreTeammates = not ignoreTeammates
     toggleTeamButton.Text = ignoreTeammates and "Ignore teammates: ON" or "Ignore teammates: OFF"
-    toggleESP()
-    toggleESP()
+    refreshESP()
 end)
 
-table.insert(connections, Players.PlayerAdded:Connect(onPlayerAdded))
-for _, p in ipairs(Players:GetPlayers()) do
-    onPlayerAdded(p)
-end
+toggleAimbotButton.MouseButton1Click:Connect(function()
+    aimbotEnabled = not aimbotEnabled
+    fovCircle.Visible = aimbotEnabled
+    toggleAimbotButton.Text = aimbotEnabled and "Disable Aimbot" or "Enable Aimbot"
+end)
 
-local function makeDraggable(frame)
-    local dragging = false
-    local dragInput = nil
-    local dragStart = nil
-    local startPos = nil
-
-    frame.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-            dragStart = input.Position
-            startPos = frame.Position
-            input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
-                    dragging = false
-                end
-            end)
+aimbotKeyButton.MouseButton1Click:Connect(function()
+    aimbotKeyButton.Text = "Press new key..."
+    local conn
+    conn = UserInputService.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.Keyboard or input.UserInputType.Name:match("Mouse") then
+            aimbotKey = input.UserInputType
+            aimbotKeyButton.Text = "Aimbot Key: " .. input.UserInputType.Name
+            conn:Disconnect()
         end
     end)
+end)
 
-    frame.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement then
-            dragInput = input
-        end
-    end)
-
-    UserInputService.InputChanged:Connect(function(input)
-        if dragging and input == dragInput then
-            local delta = input.Position - dragStart
-            frame.Position = UDim2.new(
-                startPos.X.Scale,
-                startPos.X.Offset + delta.X,
-                startPos.Y.Scale,
-                startPos.Y.Offset + delta.Y
-            )
-        end
-    end)
-end
-
-task.spawn(function()
-    while true do
-        task.wait(0.15)
-        if espEnabled then
-            updateHighlightColors()
+for _, player in ipairs(Players:GetPlayers()) do
+    if player ~= LocalPlayer then
+        player.CharacterAdded:Connect(function(char)
+            wait(1)
+            if espEnabled then addHighlight(char) end
+        end)
+        if player.Character then
+            addHighlight(player.Character)
         end
     end
+end
+
+-- RENDER LOOP
+RunService.RenderStepped:Connect(function()
+    if espEnabled then
+        updateHighlightColors()
+    end
+    if aimbotEnabled and aimbotHold then
+        local target = getClosestTarget()
+        aimAtTarget(target)
+    end
+    local mousePos = UserInputService:GetMouseLocation()
+    fovCircle.Position = Vector2.new(mousePos.X, mousePos.Y)
+    fovCircle.Radius = fovRadius
 end)
-
-
-makeDraggable(mainFrame)
-makeDraggable(minimizedBar)
