@@ -127,21 +127,41 @@ closeButton.MouseButton1Click:Connect(function()
     screenGui:Destroy()
 end)
 
+local minimizedLogo
+
 minimizeButton.MouseButton1Click:Connect(function()
     mainFrame.Visible = false
-    local mini = Instance.new("ImageButton", screenGui)
-    mini.Name = "MinimizedBar"
-    mini.Image = "rbxassetid://119268860825586"
-    mini.Size = UDim2.new(0, 40, 0, 40)
-    mini.Position = UDim2.new(0.5, -20, 0, 10)
-    mini.BackgroundTransparency = 1
-    mini.Active = true
-    mini.Draggable = true
-    mini.MouseButton1Click:Connect(function()
+
+    -- Si ya existe el logo minimizado, solo muéstralo
+    if minimizedLogo then
+        minimizedLogo.Visible = true
+        return
+    end
+
+    -- Crear el logo si no existe
+    minimizedLogo = Instance.new("ImageButton", screenGui)
+    minimizedLogo.Name = "MinimizedLogo"
+    minimizedLogo.Image = "rbxassetid://119268860825586"
+    minimizedLogo.Size = UDim2.new(0, 40, 0, 40)
+    minimizedLogo.Position = UDim2.new(0.5, -20, 0, 10)
+    minimizedLogo.BackgroundTransparency = 1
+    minimizedLogo.Active = true
+
+    -- Hacerlo redondo
+    local uiCorner = Instance.new("UICorner")
+    uiCorner.CornerRadius = UDim.new(1, 0)
+    uiCorner.Parent = minimizedLogo
+
+    -- Permitir moverlo
+    minimizedLogo.Draggable = true
+
+    -- Mostrar GUI al hacer clic
+    minimizedLogo.MouseButton1Click:Connect(function()
         mainFrame.Visible = true
-        mini:Destroy()
+        minimizedLogo.Visible = false
     end)
 end)
+
 
 toggleESPButton.MouseButton1Click:Connect(function()
     espEnabled = not espEnabled
