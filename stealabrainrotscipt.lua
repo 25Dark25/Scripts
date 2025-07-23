@@ -1,91 +1,84 @@
-local Players = game:GetService("Players")
-local UserInputService = game:GetService("UserInputService")
-local LocalPlayer = Players.LocalPlayer
-local RunService = game:GetService("RunService")
-local Camera = workspace.CurrentCamera
+local P = game:GetService("Players")
+local UIS = game:GetService("UserInputService")
+local RS = game:GetService("RunService")
+local LP = P.LocalPlayer
+local CAM = workspace.CurrentCamera
 
+local ENABLED = true
+local IGNORE_TEAM = false
+local MARKED = {}
+local CONNECTIONS = {}
+local PAUSED = false
 
-local espEnabled = true
-local ignoreTeammates = false
-local highlighted = {}
-local connections = {}
+local guiRoot = Instance.new("ScreenGui")
+guiRoot.Name = "MainInterface"
+guiRoot.ResetOnSpawn = false
+guiRoot.DisplayOrder = 9999
+guiRoot.Parent = LP:WaitForChild("PlayerGui")
 
-local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "DarkGui"
-screenGui.ResetOnSpawn = false
-screenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
-screenGui.DisplayOrder = 10000 
+local mainWnd = Instance.new("Frame", guiRoot)
+mainWnd.Name = "Window"
+mainWnd.Size = UDim2.new(0, 250, 0, 150)
+mainWnd.Position = UDim2.new(0.5, -125, 0.5, -75)
+mainWnd.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+mainWnd.Active = true  -- Necesario para arrastrar
 
-
-local mainFrame = Instance.new("Frame", screenGui)
-mainFrame.Name = "MainFrame"
-mainFrame.Size = UDim2.new(0, 250, 0, 150)
-mainFrame.Position = UDim2.new(0.5, -125, 0.5, -75)
-mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-
-local function createButton(parent, text, size, position, color)
-    local btn = Instance.new("TextButton", parent)
-    btn.Name = text:gsub("%s", "") .. "Button"
-    btn.Size = size
-    btn.Position = position
-    btn.Text = text
-    btn.TextColor3 = Color3.fromRGB(0, 0, 0)
-    btn.BackgroundColor3 = color
-    btn.AutoLocalize = false
-    return btn
+local function makeBtn(parent, txt, size, pos, color)
+    local b = Instance.new("TextButton", parent)
+    b.Name = txt:gsub("%s", "") .. "_btn"
+    b.Size = size
+    b.Position = pos
+    b.Text = txt
+    b.TextColor3 = Color3.new(0, 0, 0)
+    b.BackgroundColor3 = color
+    b.AutoLocalize = false
+    return b
 end
 
-local closeButton = createButton(mainFrame, "X", UDim2.new(0, 30, 0, 30), UDim2.new(1, -35, 0, 5), Color3.fromRGB(255, 0, 0))
-local minimizeButton = createButton(mainFrame, "-", UDim2.new(0, 30, 0, 30), UDim2.new(1, -70, 0, 5), Color3.fromRGB(200, 200, 200))
-local toggleESPButton = createButton(mainFrame, "Disable ESP", UDim2.new(0.8, 0, 0, 30), UDim2.new(0.1, 0, 0.45, 0), Color3.fromRGB(200, 200, 200))
-local toggleTeamButton = createButton(mainFrame, "Ignore teammates: OFF", UDim2.new(0.8, 0, 0, 30), UDim2.new(0.1, 0, 0.75, 0), Color3.fromRGB(200, 200, 200))
+local closeBtn = makeBtn(mainWnd, "X", UDim2.new(0,30,0,30), UDim2.new(1,-35,0,5), Color3.fromRGB(255,0,0))
+local minBtn = makeBtn(mainWnd, "-", UDim2.new(0,30,0,30), UDim2.new(1,-70,0,5), Color3.fromRGB(200,200,200))
+local toggleBtn = makeBtn(mainWnd, "Disable", UDim2.new(0.8,0,0,30), UDim2.new(0.1,0,0.45,0), Color3.fromRGB(200,200,200))
+local teamBtn = makeBtn(mainWnd, "Ignore team: OFF", UDim2.new(0.8,0,0,30), UDim2.new(0.1,0,0.75,0), Color3.fromRGB(200,200,200))
 
-local minimizedBar = Instance.new("ImageButton", screenGui)
-minimizedBar.Name = "MinimizedBar"
-minimizedBar.Size = UDim2.new(0, 40, 0, 40)
-minimizedBar.Position = UDim2.new(0.5, -20, 0, 10)
-minimizedBar.BackgroundTransparency = 1
-minimizedBar.Image = "rbxassetid://119268860825586"
-minimizedBar.Visible = false
-minimizedBar.AutoButtonColor = true
+local minimizedBtn = Instance.new("ImageButton", guiRoot)
+minimizedBtn.Name = "MiniBtn"
+minimizedBtn.Size = UDim2.new(0,40,0,40)
+minimizedBtn.Position = UDim2.new(0.5, -20, 0, 10)
+minimizedBtn.BackgroundTransparency = 1
+minimizedBtn.Image = "rbxassetid://119268860825586"
+minimizedBtn.Visible = false
+minimizedBtn.AutoButtonColor = true
+Instance.new("UICorner", minimizedBtn).CornerRadius = UDim.new(1, 0)
 
-local corner = Instance.new("UICorner", minimizedBar)
-corner.CornerRadius = UDim.new(1, 0)
-
-local function addHighlight(character)
-    if highlighted[character] or not espEnabled then return end
-    local player = Players:GetPlayerFromCharacter(character)
-    if not player or (ignoreTeammates and player.Team == LocalPlayer.Team) then return end
-
-    local hl = Instance.new("Highlight")
-    hl.Name = "ClientHighlight"
-    hl.Adornee = character
-    hl.FillTransparency = 1
-    hl.OutlineTransparency = 0
-    hl.Parent = character
-    highlighted[character] = hl
+local function markCharacter(char)
+    if MARKED[char] or not ENABLED or PAUSED then return end
+    local plr = P:GetPlayerFromCharacter(char)
+    if not plr or (IGNORE_TEAM and plr.Team == LP.Team) then return end
+    local high = Instance.new("Highlight")
+    high.Name = "Hlight"
+    high.Adornee = char
+    high.FillTransparency = 1
+    high.OutlineTransparency = 0
+    high.Parent = char
+    MARKED[char] = high
 end
 
-local function isVisible(character)
-    if not character or not character:FindFirstChild("Head") then return false end
-
-    local head = character.Head
-    local origin = Camera.CFrame.Position
-    local direction = (head.Position - origin).Unit * (head.Position - origin).Magnitude
-
-    local raycastParams = RaycastParams.new()
-    raycastParams.FilterDescendantsInstances = {LocalPlayer.Character}
-    raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
-
-    local result = workspace:Raycast(origin, direction, raycastParams)
-    return (not result or result.Instance:IsDescendantOf(character))
+local function checkVisibility(char)
+    if not char or not char:FindFirstChild("Head") then return false end
+    local head = char.Head
+    local origin = CAM.CFrame.Position
+    local dir = (head.Position - origin).Unit * (head.Position - origin).Magnitude
+    local params = RaycastParams.new()
+    params.FilterDescendantsInstances = {LP.Character}
+    params.FilterType = Enum.RaycastFilterType.Blacklist
+    local ray = workspace:Raycast(origin, dir, params)
+    return (not ray or ray.Instance:IsDescendantOf(char))
 end
 
-
-local function updateHighlightColors()
-    for character, hl in pairs(highlighted) do
-        if character and hl and character:FindFirstChild("Head") then
-            if isVisible(character) then
+local function refreshColors()
+    for char, hl in pairs(MARKED) do
+        if char and hl and char:FindFirstChild("Head") then
+            if checkVisibility(char) then
                 if hl.OutlineColor ~= Color3.fromRGB(0, 255, 0) then
                     hl.OutlineColor = Color3.fromRGB(0, 255, 0)
                 end
@@ -98,137 +91,112 @@ local function updateHighlightColors()
     end
 end
 
-
-
-local function removeHighlight(character)
-    local hl = highlighted[character]
+local function unmarkCharacter(char)
+    local hl = MARKED[char]
     if hl then
         hl:Destroy()
-        highlighted[character] = nil
+        MARKED[char] = nil
     end
 end
 
-local function onCharacterAdded(character)
-    local humanoid = character:WaitForChild("Humanoid", 5)
+local function charAdded(char)
+    local humanoid = char:WaitForChild("Humanoid", 5)
     if not humanoid then return end
-
-    if espEnabled then
-        addHighlight(character)
-    end
-
+    if ENABLED and not PAUSED then markCharacter(char) end
     humanoid.Died:Connect(function()
-        removeHighlight(character)
+        unmarkCharacter(char)
     end)
 end
 
-local function onPlayerAdded(player)
-    if player == LocalPlayer then return end
-
-    player.CharacterAdded:Connect(onCharacterAdded)
-
-    if player.Character then
-        onCharacterAdded(player.Character)
-    end
-
-    player:GetPropertyChangedSignal("Team"):Connect(function()
-        if espEnabled then
-            refreshESP()
-        end
+local function playerAdded(plr)
+    if plr == LP then return end
+    plr.CharacterAdded:Connect(charAdded)
+    if plr.Character then charAdded(plr.Character) end
+    plr:GetPropertyChangedSignal("Team"):Connect(function()
+        if ENABLED then refreshESP() end
     end)
 end
 
-local function refreshESP()
-    for char in pairs(highlighted) do
-        removeHighlight(char)
+function refreshESP()
+    for char in pairs(MARKED) do
+        unmarkCharacter(char)
     end
-    for _, p in ipairs(Players:GetPlayers()) do
-        if p ~= LocalPlayer and p.Character then
-            addHighlight(p.Character)
+    for _, plr in ipairs(P:GetPlayers()) do
+        if plr ~= LP and plr.Character then
+            markCharacter(plr.Character)
         end
     end
 end
 
-
-local function toggleESP()
-    espEnabled = not espEnabled
-    toggleESPButton.Text = espEnabled and "Disable ESP" or "Enable ESP"
-    if not espEnabled then
-        for char in pairs(highlighted) do
-            removeHighlight(char)
+function toggleESP()
+    ENABLED = not ENABLED
+    toggleBtn.Text = ENABLED and "Disable" or "Enable"
+    if not ENABLED then
+        for char in pairs(MARKED) do
+            unmarkCharacter(char)
         end
     else
-        for _, p in ipairs(Players:GetPlayers()) do
-            if p ~= LocalPlayer and p.Character then
-                addHighlight(p.Character)
+        for _, plr in ipairs(P:GetPlayers()) do
+            if plr ~= LP and plr.Character then
+                markCharacter(plr.Character)
             end
         end
     end
 end
 
 local function cleanup()
-    espEnabled = false
-    for char in pairs(highlighted) do
-        removeHighlight(char)
+    ENABLED = false
+    PAUSED = true
+    for char in pairs(MARKED) do
+        unmarkCharacter(char)
     end
-    for _, conn in ipairs(connections) do
-        if conn.Connected then
-            conn:Disconnect()
-        end
+    for _, conn in ipairs(CONNECTIONS) do
+        if conn.Connected then conn:Disconnect() end
     end
-    connections = {}
-    if screenGui and screenGui.Parent then
-        screenGui:Destroy()
-    end
+    CONNECTIONS = {}
+    if guiRoot and guiRoot.Parent then guiRoot:Destroy() end
 end
 
-closeButton.MouseButton1Click:Connect(cleanup)
-minimizeButton.MouseButton1Click:Connect(function()
-    mainFrame.Visible = false
-    minimizedBar.Visible = true
+closeBtn.MouseButton1Click:Connect(cleanup)
+minBtn.MouseButton1Click:Connect(function()
+    mainWnd.Visible = false
+    minimizedBtn.Visible = true
 end)
-minimizedBar.MouseButton1Click:Connect(function()
-    mainFrame.Visible = true
-    minimizedBar.Visible = false
+minimizedBtn.MouseButton1Click:Connect(function()
+    mainWnd.Visible = true
+    minimizedBtn.Visible = false
 end)
-toggleESPButton.MouseButton1Click:Connect(toggleESP)
-toggleTeamButton.MouseButton1Click:Connect(function()
-    ignoreTeammates = not ignoreTeammates
-    toggleTeamButton.Text = ignoreTeammates and "Ignore teammates: ON" or "Ignore teammates: OFF"
+toggleBtn.MouseButton1Click:Connect(toggleESP)
+teamBtn.MouseButton1Click:Connect(function()
+    IGNORE_TEAM = not IGNORE_TEAM
+    teamBtn.Text = IGNORE_TEAM and "Ignore team: ON" or "Ignore team: OFF"
     toggleESP()
     toggleESP()
 end)
 
-table.insert(connections, Players.PlayerAdded:Connect(onPlayerAdded))
-for _, p in ipairs(Players:GetPlayers()) do
-    onPlayerAdded(p)
+table.insert(CONNECTIONS, P.PlayerAdded:Connect(playerAdded))
+for _, plr in ipairs(P:GetPlayers()) do
+    playerAdded(plr)
 end
 
-local function makeDraggable(frame)
-    local dragging = false
-    local dragInput = nil
-    local dragStart = nil
-    local startPos = nil
-
+local function dragWnd(frame)
+    local dragging, dragInput, dragStart, startPos
     frame.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             dragging = true
             dragStart = input.Position
             startPos = frame.Position
             input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
-                    dragging = false
-                end
+                if input.UserInputState == Enum.UserInputState.End then dragging = false end
             end)
         end
     end)
-
     frame.InputChanged:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseMovement then
             dragInput = input
         end
     end)
-
-    UserInputService.InputChanged:Connect(function(input)
+    UIS.InputChanged:Connect(function(input)
         if dragging and input == dragInput then
             local delta = input.Position - dragStart
             frame.Position = UDim2.new(
@@ -243,13 +211,12 @@ end
 
 task.spawn(function()
     while true do
-        task.wait(0.15)
-        if espEnabled then
-            updateHighlightColors()
+        task.wait(0.25)  -- más espaciamiento para menos llamadas
+        if ENABLED and not PAUSED then
+            refreshColors()
         end
     end
 end)
 
-
-makeDraggable(mainFrame)
-makeDraggable(minimizedBar)
+dragWnd(mainWnd)
+dragWnd(minimizedBtn)
