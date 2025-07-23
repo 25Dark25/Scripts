@@ -39,7 +39,7 @@ local savedPosition = mainFrame.Position
 local logoImage = Instance.new("ImageButton")
 logoImage.Name = "LogoImage"
 logoImage.Size = UDim2.new(0, 50, 0, 50)
-logoImage.Position = savedPosition
+local savedPosition = UDim2.new(0.5, -25, 0, 10)
 logoImage.BackgroundTransparency = 1
 logoImage.Image = "rbxassetid://119268860825586"
 logoImage.Visible = false
@@ -122,7 +122,7 @@ minimizeButton.MouseButton1Click:Connect(function()
     minimized = not minimized
     mainFrame.Visible = not minimized
     logoImage.Visible = minimized
-    logoImage.Position = savedPosition
+    local savedPosition = UDim2.new(0.5, -25, 0, 10)
 end)
 
 logoImage.MouseButton1Click:Connect(function()
