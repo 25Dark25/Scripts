@@ -48,7 +48,7 @@ local function addHighlight(character)
     hl.Adornee = character
     hl.FillTransparency = 1
     hl.OutlineTransparency = 0
-    hl.OutlineColor = Color3.fromRGB(1, 1, 1)
+    hl.OutlineColor = Color3.fromRGB(0, 255, 0)
     hl.Parent = character
     highlighted[character] = hl
 end
