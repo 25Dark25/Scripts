@@ -257,7 +257,7 @@ end
 -- Optimización: actualización del color ESP cada 0.2s en lugar de cada frame
 task.spawn(function()
     while true do
-        task.wait(0.2)
+        task.wait(0.15)
         if espEnabled then
             updateHighlightColors()
         end
