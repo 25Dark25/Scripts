@@ -76,12 +76,16 @@ local function isVisible(character)
     local direction = (head.Position - origin).Unit * (head.Position - origin).Magnitude
 
     local raycastParams = RaycastParams.new()
-    raycastParams.FilterDescendantsInstances = {LocalPlayer.Character}
+    raycastParams.FilterDescendantsInstances = {
+        LocalPlayer.Character,  -- Ignora tu personaje
+        Camera -- Ignora cámara (importante en armas con viewmodel)
+    }
     raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
 
     local result = workspace:Raycast(origin, direction, raycastParams)
     return (not result or result.Instance:IsDescendantOf(character))
 end
+
 
 
 local function updateHighlightColors()
