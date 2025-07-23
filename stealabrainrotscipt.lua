@@ -49,6 +49,11 @@ minimizedBar.ScaleType = Enum.ScaleType.Fit
 minimizedBar.ClipsDescendants = true
 minimizedBar.ImageColor3 = Color3.new(1, 1, 1) -- optional tint
 
+-- Hacer el logo redondo
+local round = Instance.new("UICorner")
+round.CornerRadius = UDim.new(1, 0)
+round.Parent = minimizedBar
+
 
 -- Highlight functions
 local function addHighlight(character)
