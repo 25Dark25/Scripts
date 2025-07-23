@@ -3,6 +3,7 @@ local UserInputService = game:GetService("UserInputService")
 local LocalPlayer = Players.LocalPlayer
 
 local espEnabled = true
+local ignoreTeammates = false
 local highlighted = {}
 local connections = {}
 
@@ -35,6 +36,9 @@ end
 local closeButton = createButton(mainFrame, "X", UDim2.new(0, 30, 0, 30), UDim2.new(1, -35, 0, 5), Color3.fromRGB(255, 0, 0))
 local minimizeButton = createButton(mainFrame, "-", UDim2.new(0, 30, 0, 30), UDim2.new(1, -70, 0, 5), Color3.fromRGB(200, 200, 200))
 local toggleESPButton = createButton(mainFrame, "Disable ESP", UDim2.new(0.8, 0, 0, 40), UDim2.new(0.1, 0, 0.5, 0), Color3.fromRGB(200, 200, 200))
+local toggleTeamButton = createButton(mainFrame, "Ignore teammates: OFF", UDim2.new(0.8, 0, 0, 30), UDim2.new(0.1, 0, 0.75, 0), Color3.fromRGB(200, 200, 200))
+toggleTeamButton.TextColor3 = Color3.fromRGB(0, 0, 0)
+
 
 -- Minimized Bar (ImageButton with logo)
 local minimizedBar = Instance.new("ImageButton", screenGui)
@@ -61,6 +65,10 @@ round.Parent = minimizedBar
 -- Highlight functions
 local function addHighlight(character)
     if highlighted[character] or not espEnabled then return end
+
+    local player = Players:GetPlayerFromCharacter(character)
+    if not player or (ignoreTeammates and player.Team == LocalPlayer.Team) then return end
+
     local hl = Instance.new("Highlight")
     hl.Name = "ClientHighlight"
     hl.Adornee = character
@@ -70,6 +78,7 @@ local function addHighlight(character)
     hl.Parent = character
     highlighted[character] = hl
 end
+
 
 local function removeHighlight(character)
     local hl = highlighted[character]
@@ -143,6 +152,16 @@ minimizedBar.MouseButton1Click:Connect(function()
 end)
 
 toggleESPButton.MouseButton1Click:Connect(toggleESP)
+
+toggleTeamButton.MouseButton1Click:Connect(function()
+    ignoreTeammates = not ignoreTeammates
+    toggleTeamButton.Text = ignoreTeammates and "Ignore teammates: ON" or "Ignore teammates: OFF"
+
+    -- Opcional: actualizar ESP al cambiar esto
+    toggleESP() -- desactiva y activa para refrescar highlights
+    toggleESP()
+end)
+
 
 -- Connect players
 table.insert(connections, Players.PlayerAdded:Connect(onPlayerAdded))
