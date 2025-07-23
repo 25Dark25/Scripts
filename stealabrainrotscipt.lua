@@ -39,7 +39,8 @@ local savedPosition = mainFrame.Position
 local logoImage = Instance.new("ImageButton")
 logoImage.Name = "LogoImage"
 logoImage.Size = UDim2.new(0, 50, 0, 50)
-logoImage.Position = savedPosition
+logoImage.Position = UDim2.new(0, 100, 0, 100)
+logoImage.AnchorPoint = Vector2.new(0.5, 0.5)
 logoImage.BackgroundTransparency = 1
 logoImage.Image = "rbxassetid://119268860825586"
 logoImage.Visible = false
@@ -50,26 +51,29 @@ local logoUICorner = Instance.new("UICorner")
 logoUICorner.CornerRadius = UDim.new(1, 0)
 logoUICorner.Parent = logoImage
 
+-- Movimiento del logo
 local dragging, offset
 logoImage.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
         dragging = true
-        offset = input.Position - logoImage.AbsolutePosition
+        offset = Vector2.new(input.Position.X, input.Position.Y) - Vector2.new(logoImage.AbsolutePosition.X, logoImage.AbsolutePosition.Y)
     end
 end)
 
 UserInputService.InputEnded:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
         dragging = false
-        savedPosition = logoImage.Position
     end
 end)
 
 UserInputService.InputChanged:Connect(function(input)
     if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-        logoImage.Position = UDim2.new(0, input.Position.X - offset.X, 0, input.Position.Y - offset.Y)
+        local newPos = Vector2.new(input.Position.X, input.Position.Y) - offset
+        logoImage.Position = UDim2.new(0, newPos.X, 0, newPos.Y)
+        savedPosition = logoImage.Position
     end
 end)
+
 
 -- Hacer movible el mainFrame
 local draggingMain, dragInput, startPos, dragStart
@@ -115,20 +119,22 @@ local toggleTeamButton = createButton(mainFrame, "Ignore teammates: OFF", UDim2.
 local toggleAimbotButton = createButton(mainFrame, "Enable Aimbot", UDim2.new(0.8, 0, 0, 30), UDim2.new(0.1, 0, 0.70, 0), Color3.fromRGB(200, 200, 200))
 local aimbotKeyButton = createButton(mainFrame, "Change Aimbot Key", UDim2.new(0.8, 0, 0, 30), UDim2.new(0.1, 0, 0.90, 0), Color3.fromRGB(100, 100, 255))
 
--- FUNCIONALIDAD DE LOS BOTONES
+-- Minimizar
 minimizeButton.MouseButton1Click:Connect(function()
-    minimized = not minimized
-    mainFrame.Visible = not minimized
-    logoImage.Visible = minimized
+    minimized = true
+    mainFrame.Visible = false
     logoImage.Position = savedPosition
+    logoImage.Visible = true
 end)
 
+-- Restaurar desde minimizado
 logoImage.MouseButton1Click:Connect(function()
     minimized = false
     logoImage.Visible = false
     mainFrame.Visible = true
-    mainFrame.Position = logoImage.Position
+    mainFrame.Position = savedPosition
 end)
+
 
 -- CÍRCULO DE FOV
 local fovCircle = Drawing.new("Circle")
