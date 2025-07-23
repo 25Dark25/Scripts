@@ -35,12 +35,14 @@ mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 local minimized = false
 local savedPosition = mainFrame.Position
 
+screenGui.IgnoreGuiInset = true  -- Evitar desplazamientos por barras de Roblox
+
 -- Logo minimizado
 local logoImage = Instance.new("ImageButton")
 logoImage.Name = "LogoImage"
 logoImage.Size = UDim2.new(0, 50, 0, 50)
-logoImage.Position = UDim2.new(0, 100, 0, 100) -- posición inicial (puedes ajustar)
-logoImage.AnchorPoint = Vector2.new(0.5, 0.5) -- centro del logo
+logoImage.Position = UDim2.new(0, 100, 0, 100)
+logoImage.AnchorPoint = Vector2.new(0.5, 0.5) -- centrado
 logoImage.BackgroundTransparency = 1
 logoImage.Image = "rbxassetid://119268860825586"
 logoImage.Visible = false
@@ -51,7 +53,6 @@ local logoUICorner = Instance.new("UICorner")
 logoUICorner.CornerRadius = UDim.new(1, 0)
 logoUICorner.Parent = logoImage
 
--- Variables para arrastrar logo
 local draggingLogo = false
 
 logoImage.InputBegan:Connect(function(input)
@@ -69,13 +70,20 @@ end)
 UserInputService.InputChanged:Connect(function(input)
     if draggingLogo and input.UserInputType == Enum.UserInputType.MouseMovement then
         local mouse = UserInputService:GetMouseLocation()
-        logoImage.Position = UDim2.new(0, mouse.X, 0, mouse.Y) -- Poner logo en la posición exacta del mouse
-        savedPosition = logoImage.Position -- guardar posición del logo
+        -- Ajustar para que no quede fuera de pantalla
+        local x = math.clamp(mouse.X, 25, workspace.CurrentCamera.ViewportSize.X - 25)
+        local y = math.clamp(mouse.Y, 25, workspace.CurrentCamera.ViewportSize.Y - 25)
+        logoImage.Position = UDim2.new(0, x, 0, y)
+        savedPosition = logoImage.Position
     end
 end)
 
--- Variables para arrastrar GUI principal (ya las tienes)
-local draggingMain, dragInput, startPos, dragStart
+-- Asegúrate que mainFrame tenga color visible
+mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)  -- No negro absoluto, para que no parezca negro total
+
+-- Guardar posición del mainFrame cuando se termine de mover
+local draggingMain, dragStart, startPos
+local savedMainPosition = mainFrame.Position
 
 mainFrame.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
@@ -88,7 +96,7 @@ end)
 UserInputService.InputEnded:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
         draggingMain = false
-        savedMainPosition = mainFrame.Position -- guardar posición del GUI principal cuando sueltas
+        savedMainPosition = mainFrame.Position
     end
 end)
 
@@ -99,7 +107,7 @@ UserInputService.InputChanged:Connect(function(input)
     end
 end)
 
--- Al minimizar y restaurar GUI
+-- Minimizar y restaurar sin mover la posición del mainFrame
 
 minimizeButton.MouseButton1Click:Connect(function()
     minimized = not minimized
@@ -110,7 +118,7 @@ minimizeButton.MouseButton1Click:Connect(function()
     else
         logoImage.Visible = false
         mainFrame.Visible = true
-        mainFrame.Position = savedMainPosition or mainFrame.Position -- restaurar posición del GUI principal sin moverlo al logo
+        mainFrame.Position = savedMainPosition or mainFrame.Position
     end
 end)
 
@@ -118,8 +126,9 @@ logoImage.MouseButton1Click:Connect(function()
     minimized = false
     logoImage.Visible = false
     mainFrame.Visible = true
-    mainFrame.Position = savedMainPosition or mainFrame.Position -- restaurar posición guardada del GUI principal
+    mainFrame.Position = savedMainPosition or mainFrame.Position
 end)
+
 
 -- Hacer movible el mainFrame
 local draggingMain, dragInput, startPos, dragStart
