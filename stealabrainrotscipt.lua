@@ -10,7 +10,6 @@ local ignoreTeammates = false
 local highlighted = {}
 local connections = {}
 
--- Create GUI
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "DarkGui"
 screenGui.ResetOnSpawn = false
@@ -18,14 +17,12 @@ screenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 screenGui.DisplayOrder = 10000 
 
 
--- Main Frame
 local mainFrame = Instance.new("Frame", screenGui)
 mainFrame.Name = "MainFrame"
 mainFrame.Size = UDim2.new(0, 250, 0, 150)
 mainFrame.Position = UDim2.new(0.5, -125, 0.5, -75)
 mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 
--- Buttons helper function
 local function createButton(parent, text, size, position, color)
     local btn = Instance.new("TextButton", parent)
     btn.Name = text:gsub("%s", "") .. "Button"
@@ -43,7 +40,6 @@ local minimizeButton = createButton(mainFrame, "-", UDim2.new(0, 30, 0, 30), UDi
 local toggleESPButton = createButton(mainFrame, "Disable ESP", UDim2.new(0.8, 0, 0, 30), UDim2.new(0.1, 0, 0.45, 0), Color3.fromRGB(200, 200, 200))
 local toggleTeamButton = createButton(mainFrame, "Ignore teammates: OFF", UDim2.new(0.8, 0, 0, 30), UDim2.new(0.1, 0, 0.75, 0), Color3.fromRGB(200, 200, 200))
 
--- Minimized Bar (ImageButton with logo)
 local minimizedBar = Instance.new("ImageButton", screenGui)
 minimizedBar.Name = "MinimizedBar"
 minimizedBar.Size = UDim2.new(0, 40, 0, 40)
@@ -91,11 +87,11 @@ local function updateHighlightColors()
         if character and hl and character:FindFirstChild("Head") then
             if isVisible(character) then
                 if hl.OutlineColor ~= Color3.fromRGB(0, 255, 0) then
-                    hl.OutlineColor = Color3.fromRGB(0, 255, 0) -- Verde si visible
+                    hl.OutlineColor = Color3.fromRGB(0, 255, 0)
                 end
             else
                 if hl.OutlineColor ~= Color3.fromRGB(255, 0, 0) then
-                    hl.OutlineColor = Color3.fromRGB(255, 0, 0) -- Rojo si oculto
+                    hl.OutlineColor = Color3.fromRGB(255, 0, 0)
                 end
             end
         end
@@ -113,16 +109,13 @@ local function removeHighlight(character)
 end
 
 local function onCharacterAdded(character)
-    -- Esperar que humanoide exista
     local humanoid = character:WaitForChild("Humanoid", 5)
     if not humanoid then return end
 
-    -- Añadir highlight si ESP está activado
     if espEnabled then
         addHighlight(character)
     end
 
-    -- Cuando el humanoide muere, quitar highlight
     humanoid.Died:Connect(function()
         removeHighlight(character)
     end)
@@ -131,15 +124,12 @@ end
 local function onPlayerAdded(player)
     if player == LocalPlayer then return end
 
-    -- Cuando el personaje se añade
     player.CharacterAdded:Connect(onCharacterAdded)
 
-    -- Si el personaje ya existe al momento de unirse
     if player.Character then
         onCharacterAdded(player.Character)
     end
 
-    -- Opcional: refrescar ESP si el jugador cambia de equipo
     player:GetPropertyChangedSignal("Team"):Connect(function()
         if espEnabled then
             refreshESP()
@@ -148,11 +138,9 @@ local function onPlayerAdded(player)
 end
 
 local function refreshESP()
-    -- Limpiar todos los highlights actuales
     for char in pairs(highlighted) do
         removeHighlight(char)
     end
-    -- Re-agregar highlights solo a los personajes que cumplen condición
     for _, p in ipairs(Players:GetPlayers()) do
         if p ~= LocalPlayer and p.Character then
             addHighlight(p.Character)
@@ -193,7 +181,6 @@ local function cleanup()
     end
 end
 
--- Button logic
 closeButton.MouseButton1Click:Connect(cleanup)
 minimizeButton.MouseButton1Click:Connect(function()
     mainFrame.Visible = false
@@ -211,13 +198,11 @@ toggleTeamButton.MouseButton1Click:Connect(function()
     toggleESP()
 end)
 
--- Connect players
 table.insert(connections, Players.PlayerAdded:Connect(onPlayerAdded))
 for _, p in ipairs(Players:GetPlayers()) do
     onPlayerAdded(p)
 end
 
--- Make draggable
 local function makeDraggable(frame)
     local dragging = false
     local dragInput = nil
@@ -256,7 +241,6 @@ local function makeDraggable(frame)
     end)
 end
 
--- Optimización: actualización del color ESP cada 0.2s en lugar de cada frame
 task.spawn(function()
     while true do
         task.wait(0.15)
