@@ -26,7 +26,7 @@ local function createButton(parent, text, size, position, color)
     btn.Size = size
     btn.Position = position
     btn.Text = text
-    btn.TextColor3 = Color3.new(1, 1, 1)
+    btn.TextColor3 = Color3.new(250, 250, 250)
     btn.BackgroundColor3 = color
     btn.AutoLocalize = false
     return btn
