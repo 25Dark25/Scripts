@@ -203,3 +203,39 @@ RunService.RenderStepped:Connect(function()
     fovCircle.Position = Vector2.new(viewportSize.X / 2, viewportSize.Y / 2)
     fovCircle.Radius = fovRadius
 end)
+
+-- CONEXIONES DE JUGADORES
+for _, player in ipairs(Players:GetPlayers()) do
+	if player ~= LocalPlayer then
+		player.CharacterAdded:Connect(function(char)
+			task.wait(1)
+			if espEnabled then addHighlight(char) end
+		end)
+
+		if player.Character then
+			addHighlight(player.Character)
+		end
+	end
+end
+
+Players.PlayerAdded:Connect(function(player)
+	player.CharacterAdded:Connect(function(char)
+		task.wait(1)
+		if espEnabled then addHighlight(char) end
+	end)
+end)
+
+Players.PlayerRemoving:Connect(function(player)
+	if player.Character then
+		removeHighlight(player.Character)
+	end
+end)
+
+-- CIERRE FINAL (BOTÓN DE CIERRE)
+closeButton.MouseButton1Click:Connect(function()
+	espEnabled = false
+	aimbotEnabled = false
+	for char in pairs(highlighted) do removeHighlight(char) end
+	for _, conn in ipairs(connections) do if conn.Connected then conn:Disconnect() end end
+	screenGui:Destroy()
+end)
