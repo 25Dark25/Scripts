@@ -26,7 +26,7 @@ local function createButton(parent, text, size, position, color)
     btn.Size = size
     btn.Position = position
     btn.Text = text
-    btn.TextColor3 = Color3.new(250, 250, 250)
+    btn.TextColor3 = Color3.new(1, 1, 1)
     btn.BackgroundColor3 = color
     btn.AutoLocalize = false
     return btn
@@ -48,7 +48,7 @@ local function addHighlight(character)
     hl.Adornee = character
     hl.FillTransparency = 1
     hl.OutlineTransparency = 0
-    hl.OutlineColor = Color3.fromRGB(0, 255, 0)
+    hl.OutlineColor = Color3.fromRGB(1, 1, 1)
     hl.Parent = character
     highlighted[character] = hl
 end
