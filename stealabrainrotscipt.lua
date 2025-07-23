@@ -54,8 +54,24 @@ corner.CornerRadius = UDim.new(1, 0)
 -- Highlight functions
 local function addHighlight(character)
     if highlighted[character] or not espEnabled then return end
+
     local player = Players:GetPlayerFromCharacter(character)
-    if not player or (ignoreTeammates and player.Team == LocalPlayer.Team) then return end
+    if not player or player == LocalPlayer then return end
+
+    if filterAllies and player.Team == LocalPlayer.Team then
+        return -- Ignorar aliados si está activado
+    end
+
+    local hl = Instance.new("Highlight")
+    hl.Name = "ClientHighlight"
+    hl.Adornee = character
+    hl.FillTransparency = 1
+    hl.OutlineTransparency = 0
+    hl.OutlineColor = Color3.fromRGB(0, 255, 0)
+    hl.Parent = character
+    highlighted[character] = hl
+end
+
 
     local hl = Instance.new("Highlight")
     hl.Name = "ClientHighlight"
