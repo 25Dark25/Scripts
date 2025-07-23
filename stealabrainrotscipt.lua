@@ -33,7 +33,7 @@ minimizeButton.BackgroundColor3 = Color3.fromRGB(250, 250, 250)
 
 local toggleESPButton = Instance.new("TextButton", mainFrame)
 toggleESPButton.Name = "ToggleESPButton"
-toggleESPButton.Text = "Deactivate ESP"
+toggleESPButton.Text = "Deactivar ESP"
 toggleESPButton.Size = UDim2.new(0.8, 0, 0, 40)
 toggleESPButton.Position = UDim2.new(0.1, 0, 0.5, 0)
 toggleESPButton.BackgroundColor3 = Color3.fromRGB(250, 250, 250)
@@ -91,7 +91,7 @@ end
 -- Toggle ESP
 local function toggleESP()
 	espEnabled = not espEnabled
-	toggleESPButton.Text = espEnabled and "Deactivate ESP" or "Activate ESP"
+	toggleESPButton.Text = espEnabled and "Deactivar ESP" or "Activar ESP"
 	if not espEnabled then
 		for char, _ in pairs(highlighted) do
 			removeHighlight(char)
