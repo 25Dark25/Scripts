@@ -36,9 +36,19 @@ local closeButton = createButton(mainFrame, "X", UDim2.new(0, 30, 0, 30), UDim2.
 local minimizeButton = createButton(mainFrame, "-", UDim2.new(0, 30, 0, 30), UDim2.new(1, -70, 0, 5), Color3.fromRGB(200, 200, 200))
 local toggleESPButton = createButton(mainFrame, "Disable ESP", UDim2.new(0.8, 0, 0, 40), UDim2.new(0.1, 0, 0.5, 0), Color3.fromRGB(200, 200, 200))
 
-local minimizedBar = createButton(screenGui, "Dark", UDim2.new(0, 80, 0, 30), UDim2.new(0.5, -40, 0, 10), Color3.fromRGB(40, 40, 40))
+-- Minimized Bar (Image Logo)
+local minimizedBar = Instance.new("ImageButton", screenGui)
+minimizedBar.Name = "MinimizedBar"
+minimizedBar.Size = UDim2.new(0, 50, 0, 50)
+minimizedBar.Position = UDim2.new(0.5, -25, 0, 10) -- centered top
+minimizedBar.BackgroundTransparency = 1
+minimizedBar.Image = "rbxassetid://PUT_YOUR_IMAGE_ID_HERE" -- Replace with your image ID
 minimizedBar.Visible = false
-minimizedBar.AutoLocalize = false
+minimizedBar.AutoButtonColor = true
+minimizedBar.ScaleType = Enum.ScaleType.Fit
+minimizedBar.ClipsDescendants = true
+minimizedBar.ImageColor3 = Color3.new(1, 1, 1) -- optional tint
+
 
 -- Highlight functions
 local function addHighlight(character)
