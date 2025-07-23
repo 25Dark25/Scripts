@@ -70,32 +70,36 @@ end
 
 local function isVisible(character)
     if not character or not character:FindFirstChild("Head") then return false end
+
     local head = character.Head
     local origin = Camera.CFrame.Position
-    local direction = (head.Position - origin)
+    local direction = (head.Position - origin).Unit * (head.Position - origin).Magnitude
 
     local raycastParams = RaycastParams.new()
     raycastParams.FilterDescendantsInstances = {LocalPlayer.Character}
     raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
 
-    local raycastResult = workspace:Raycast(origin, direction, raycastParams)
-
-    if not raycastResult or raycastResult.Instance:IsDescendantOf(character) then
-        return true
-    else
-        return false
-    end
+    local result = workspace:Raycast(origin, direction, raycastParams)
+    return (not result or result.Instance:IsDescendantOf(character))
 end
+
 
 local function updateHighlightColors()
     for character, hl in pairs(highlighted) do
-        if isVisible(character) then
-            hl.OutlineColor = Color3.fromRGB(0, 255, 0) -- Verde si visible
-        else
-            hl.OutlineColor = Color3.fromRGB(255, 0, 0) -- Rojo si detrás de obstáculo
+        if character and hl and character:FindFirstChild("Head") then
+            if isVisible(character) then
+                if hl.OutlineColor ~= Color3.fromRGB(0, 255, 0) then
+                    hl.OutlineColor = Color3.fromRGB(0, 255, 0) -- Verde si visible
+                end
+            else
+                if hl.OutlineColor ~= Color3.fromRGB(255, 0, 0) then
+                    hl.OutlineColor = Color3.fromRGB(255, 0, 0) -- Rojo si oculto
+                end
+            end
         end
     end
 end
+
 
 
 local function removeHighlight(character)
