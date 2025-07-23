@@ -129,19 +129,66 @@ end)
 
 minimizeButton.MouseButton1Click:Connect(function()
     mainFrame.Visible = false
-    local mini = Instance.new("ImageButton", screenGui)
-    mini.Name = "MinimizedBar"
-    mini.Image = "rbxassetid://119268860825586"
-    mini.Size = UDim2.new(0, 40, 0, 40)
-    mini.Position = UDim2.new(0.5, -20, 0, 10)
-    mini.BackgroundTransparency = 1
-    mini.Active = true
-    mini.Draggable = true
-    mini.MouseButton1Click:Connect(function()
-        mainFrame.Visible = true
-        mini:Destroy()
-    end)
+    minimizedLogo.Visible = true
 end)
+
+
+-- LOGO CUANDO ESTÁ MINIMIZADO
+local minimizedLogo = Instance.new("ImageButton")
+minimizedLogo.Name = "MinimizedLogo"
+minimizedLogo.Size = UDim2.new(0, 60, 0, 60)
+minimizedLogo.Position = UDim2.new(0.5, -30, 0, 10) -- posición inicial centrada arriba
+minimizedLogo.Image = "rbxassetid://119268860825586" -- ID del logo
+minimizedLogo.BackgroundTransparency = 1
+minimizedLogo.Visible = false
+minimizedLogo.Parent = screenGui
+
+-- Redondear el logo (hacerlo circular)
+local uiCorner = Instance.new("UICorner", minimizedLogo)
+uiCorner.CornerRadius = UDim.new(1, 0)
+
+-- Permitir mover el logo
+local dragging, dragInput, dragStart, startPos
+local function update(input)
+    local delta = input.Position - dragStart
+    minimizedLogo.Position = UDim2.new(
+        0, startPos.X.Offset + delta.X,
+        0, startPos.Y.Offset + delta.Y
+    )
+end
+
+minimizedLogo.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        dragStart = input.Position
+        startPos = minimizedLogo.Position
+
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+minimizedLogo.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement then
+        dragInput = input
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        update(input)
+    end
+end)
+
+-- Mostrar GUI al hacer clic en el logo
+minimizedLogo.MouseButton1Click:Connect(function()
+    mainFrame.Visible = true
+    minimizedLogo.Visible = false
+end)
+
 
 toggleESPButton.MouseButton1Click:Connect(function()
     espEnabled = not espEnabled
