@@ -280,7 +280,7 @@ for _, player in ipairs(Players:GetPlayers()) do
 end
 
 local lastColorUpdate = 0
-local colorUpdateInterval = 0.1 
+local colorUpdateInterval = 0.05 
 
 RunService.RenderStepped:Connect(function(dt)
     if espEnabled then
