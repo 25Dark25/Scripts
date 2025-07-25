@@ -100,12 +100,12 @@ local function createButton(parent, text, size, position, color)
     return btn
 end
 
-local closeButton = createButton(mainFrame, "X", UDim2.new(0, 30, 0, 20), UDim2.new(1, -35, 0, 5), Color3.fromRGB(255, 0, 0))
-local minimizeButton = createButton(mainFrame, "-", UDim2.new(0, 30, 0, 20), UDim2.new(1, -70, 0, 5), Color3.fromRGB(200, 200, 200))
-local toggleESPButton = createButton(mainFrame, "Disable ESP", UDim2.new(0.8, 0, 0, 30), UDim2.new(0.1, 0, 0.30, 0), Color3.fromRGB(200, 200, 200))
-local toggleTeamButton = createButton(mainFrame, "Ignore teammates: OFF", UDim2.new(0.8, 0, 0, 30), UDim2.new(0.1, 0, 0.50, 0), Color3.fromRGB(200, 200, 200))
-local toggleAimbotButton = createButton(mainFrame, "Enable Aimbot", UDim2.new(0.8, 0, 0, 30), UDim2.new(0.1, 0, 0.70, 0), Color3.fromRGB(200, 200, 200))
-local aimbotKeyButton = createButton(mainFrame, "Change Aimbot Key", UDim2.new(0.8, 0, 0, 30), UDim2.new(0.1, 0, 0.90, 0), Color3.fromRGB(100, 100, 255))
+local closeButton = createButton(mainFrame, "X", UDim2.new(0, 30, 0, 30), UDim2.new(1, -35, 0, 5), Color3.fromRGB(255, 0, 0))
+local minimizeButton = createButton(mainFrame, "-", UDim2.new(0, 30, 0, 30), UDim2.new(1, -70, 0, 5), Color3.fromRGB(200, 200, 200))
+local toggleESPButton = createButton(mainFrame, "Disable ESP", UDim2.new(0.8, 0, 0, 30), UDim2.new(0.1, 0, 0, 40), Color3.fromRGB(200, 200, 200))
+local toggleTeamButton = createButton(mainFrame, "Ignore teammates: OFF", UDim2.new(0.8, 0, 0, 30), UDim2.new(0.1, 0, 0, 75), Color3.fromRGB(200, 200, 200))
+local toggleAimbotButton = createButton(mainFrame, "Enable Aimbot", UDim2.new(0.8, 0, 0, 30), UDim2.new(0.1, 0, 0, 110), Color3.fromRGB(200, 200, 200))
+local aimbotKeyButton = createButton(mainFrame, "Change Aimbot Key", UDim2.new(0.8, 0, 0, 30), UDim2.new(0.1, 0, 0, 145), Color3.fromRGB(100, 100, 255))
 
 minimizeButton.MouseButton1Click:Connect(function()
     minimized = not minimized
