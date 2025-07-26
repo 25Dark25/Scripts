@@ -10,7 +10,24 @@ local frame = Instance.new("Frame", gui)
 frame.Size = UDim2.new(0, 300, 0, 160)
 frame.Position = UDim2.new(0.5, -150, 0.5, -80)
 frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+frame.BorderSizePixel = 0
 
+-- ❌ Botón de cierre
+local closeBtn = Instance.new("TextButton", frame)
+closeBtn.Text = "✖"
+closeBtn.Size = UDim2.new(0, 25, 0, 25)
+closeBtn.Position = UDim2.new(1, -30, 0, 5)
+closeBtn.TextColor3 = Color3.fromRGB(255, 100, 100)
+closeBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+closeBtn.BorderSizePixel = 0
+closeBtn.Font = Enum.Font.SourceSansBold
+closeBtn.TextSize = 18
+
+closeBtn.MouseButton1Click:Connect(function()
+	gui:Destroy()
+end)
+
+-- 🏷️ Título
 local title = Instance.new("TextLabel", frame)
 title.Text = "🔐 Sistema de Claves"
 title.Size = UDim2.new(1, 0, 0, 30)
@@ -19,6 +36,7 @@ title.BackgroundTransparency = 1
 title.Font = Enum.Font.SourceSansBold
 title.TextSize = 20
 
+-- 🧾 Entrada de clave
 local input = Instance.new("TextBox", frame)
 input.PlaceholderText = "Introduce tu clave"
 input.Size = UDim2.new(0.8, 0, 0, 30)
@@ -27,6 +45,7 @@ input.Text = ""
 input.TextColor3 = Color3.new(1,1,1)
 input.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 
+-- ✅ Botón verificar
 local button = Instance.new("TextButton", frame)
 button.Text = "Verificar Clave"
 button.Size = UDim2.new(0.5, 0, 0, 30)
@@ -34,6 +53,7 @@ button.Position = UDim2.new(0.25, 0, 0.6, 0)
 button.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
 button.TextColor3 = Color3.new(1,1,1)
 
+-- 📢 Estado
 local status = Instance.new("TextLabel", frame)
 status.Text = ""
 status.Size = UDim2.new(1, 0, 0, 20)
@@ -42,6 +62,7 @@ status.TextColor3 = Color3.fromRGB(255, 255, 255)
 status.BackgroundTransparency = 1
 status.TextSize = 14
 
+-- 🔗 API de PlatoBoost
 local PLATOBOOST_API = "https://api.platoboost.com/key-system/verify?script_id=769a0b3f-5e22-40bd-bbac-41910d255af5="
 
 local function verifyKey(key)
@@ -58,6 +79,7 @@ local function verifyKey(key)
 	return false
 end
 
+-- 🎯 Verificación
 button.MouseButton1Click:Connect(function()
 	local userKey = input.Text
 	if userKey == "" then
