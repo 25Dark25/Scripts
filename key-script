@@ -1,0 +1,81 @@
+-- 🔐 SISTEMA DE CLAVES - INICIO
+local HttpService = game:GetService("HttpService")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+local gui = Instance.new("ScreenGui", LocalPlayer:WaitForChild("PlayerGui"))
+gui.Name = "KeySystem"
+
+local frame = Instance.new("Frame", gui)
+frame.Size = UDim2.new(0, 300, 0, 160)
+frame.Position = UDim2.new(0.5, -150, 0.5, -80)
+frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+
+local title = Instance.new("TextLabel", frame)
+title.Text = "🔐 Sistema de Claves"
+title.Size = UDim2.new(1, 0, 0, 30)
+title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.BackgroundTransparency = 1
+title.Font = Enum.Font.SourceSansBold
+title.TextSize = 20
+
+local input = Instance.new("TextBox", frame)
+input.PlaceholderText = "Introduce tu clave"
+input.Size = UDim2.new(0.8, 0, 0, 30)
+input.Position = UDim2.new(0.1, 0, 0.3, 0)
+input.Text = ""
+input.TextColor3 = Color3.new(1,1,1)
+input.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+
+local button = Instance.new("TextButton", frame)
+button.Text = "Verificar Clave"
+button.Size = UDim2.new(0.5, 0, 0, 30)
+button.Position = UDim2.new(0.25, 0, 0.6, 0)
+button.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+button.TextColor3 = Color3.new(1,1,1)
+
+local status = Instance.new("TextLabel", frame)
+status.Text = ""
+status.Size = UDim2.new(1, 0, 0, 20)
+status.Position = UDim2.new(0, 0, 0.85, 0)
+status.TextColor3 = Color3.fromRGB(255, 255, 255)
+status.BackgroundTransparency = 1
+status.TextSize = 14
+
+local PLATOBOOST_API = "https://api.platoboost.com/key-system/verify?script_id=769a0b3f-5e22-40bd-bbac-41910d255af5="
+
+local function verifyKey(key)
+	local success, response = pcall(function()
+		return HttpService:GetAsync(PLATOBOOST_API .. key)
+	end)
+
+	if success then
+		local data = HttpService:JSONDecode(response)
+		if data.success == true then
+			return true
+		end
+	end
+	return false
+end
+
+button.MouseButton1Click:Connect(function()
+	local userKey = input.Text
+	if userKey == "" then
+		status.Text = "❌ Introduce una clave válida."
+		return
+	end
+
+	status.Text = "🔄 Verificando clave..."
+	local result = verifyKey(userKey)
+	if result then
+		status.Text = "✅ Clave válida. Cargando..."
+		wait(1)
+		gui:Destroy()
+
+		-- 👇 AQUÍ EJECUTAMOS TU SCRIPT PRINCIPAL:
+		loadstring(game:HttpGet("https://raw.githubusercontent.com/25Dark25/Scripts/refs/heads/main/main-script"))()
+	else
+		status.Text = "❌ Clave inválida o expirada."
+	end
+end)
+-- 🔐 SISTEMA DE CLAVES - FIN
