@@ -12,7 +12,15 @@ local verifyKey = verifyKey
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "KeySystemGui"
 ScreenGui.ResetOnSpawn = false
-ScreenGui.Parent = game.CoreGui
+local function getExploitGui()
+    local gui = (get_hidden_ui or gethui or get_hidden_gui or function()
+        return game:GetService("CoreGui")
+    end)()
+    return gui
+end
+
+ScreenGui.Parent = getExploitGui()
+
 
 local Frame = Instance.new("Frame")
 Frame.Size = UDim2.new(0, 300, 0, 150)
