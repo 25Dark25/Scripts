@@ -158,6 +158,16 @@ AimbotTab:CreateToggle({
     end
 })
 
+AimbotTab:CreateKeybind({
+	Name = "Tecla de Aimbot",
+	CurrentKeybind = "MouseButton2",
+	HoldToInteract = true,
+	Flag = "AimbotKey",
+	Callback = function(Key)
+		aimbotKey = Enum.UserInputType[Key] or Enum.KeyCode[Key]
+	end,
+})
+
 AimbotTab:CreateSlider({
     Name = "Tamaño del FOV",
     Range = {50, 500},
