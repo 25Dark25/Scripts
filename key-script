@@ -1,0 +1,221 @@
+-- Cargar Rayfield GUI
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+-- Crear la ventana principal
+local Window = Rayfield:CreateWindow({
+    Name = "Dark Hub",
+    LoadingTitle = "Cargando Dark Hub",
+    LoadingSubtitle = "por Dark",
+    ShowText = "Dark Hub",
+    Theme = "Amethyst",
+    ToggleUIKeybind = "K",
+
+    ConfigurationSaving = {
+        Enabled = true,
+        FolderName = "DarkHub",
+        FileName = "DarkSettings"
+    },
+
+    KeySystem = true,
+    KeySettings = {
+        Title = "Sistema de Clave de Dark",
+        Subtitle = "Obten tu clave desde Platoboost o LootLabs",
+        Note = "Ingresa tu clave",
+        FileName = "DarkKey",
+        SaveKey = true,
+        GrabKeyFromSite = false,
+        Key = {"DarkHub29568294"} -- Reemplaza con tu clave real
+    }
+})
+
+-- Crear pestañas
+local EspTab = Window:CreateTab("🧿 ESP", 4483362458)
+local AimbotTab = Window:CreateTab("🎯 Aimbot", 4483362458)
+
+-- Variables lógicas
+local espEnabled = true
+local aimbotEnabled = false
+local ignoreTeammates = false
+local aimbotKey = Enum.UserInputType.MouseButton2
+local smoothing = 0.15
+local fovRadius = 100
+
+-- Refs de servicios
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+
+-- Dibujar FOV
+local fovCircle = Drawing.new("Circle")
+fovCircle.Color = Color3.fromRGB(255, 0, 0)
+fovCircle.Thickness = 1
+fovCircle.Radius = fovRadius
+fovCircle.NumSides = 64
+fovCircle.Transparency = 1
+fovCircle.Visible = false
+fovCircle.Filled = false
+
+-- ESP
+local highlighted = {}
+
+local function addHighlight(character)
+    if highlighted[character] or not espEnabled then return end
+    local player = Players:GetPlayerFromCharacter(character)
+    if not player or (ignoreTeammates and player.Team == LocalPlayer.Team) then return end
+
+    local hl = Instance.new("Highlight")
+    hl.Name = "ClientHighlight"
+    hl.Adornee = character
+    hl.FillTransparency = 1
+    hl.OutlineTransparency = 0
+    hl.Parent = character
+    highlighted[character] = hl
+end
+
+local function removeHighlight(character)
+    local hl = highlighted[character]
+    if hl then hl:Destroy() highlighted[character] = nil end
+end
+
+local function refreshESP()
+    for char in pairs(highlighted) do removeHighlight(char) end
+    if not espEnabled then return end
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer and p.Character then
+            addHighlight(p.Character)
+        end
+    end
+end
+
+local function updateHighlightColors()
+    for character, hl in pairs(highlighted) do
+        if character and hl and character:FindFirstChild("Head") then
+            local visible = workspace:Raycast(Camera.CFrame.Position, (character.Head.Position - Camera.CFrame.Position), RaycastParams.new()) == nil
+            hl.OutlineColor = visible and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
+        end
+    end
+end
+
+-- Aimbot
+local function getClosestTarget()
+    local closest, shortest = nil, math.huge
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("Head") then
+            if not ignoreTeammates or p.Team ~= LocalPlayer.Team then
+                local head = p.Character.Head
+                local pos, onScreen = Camera:WorldToViewportPoint(head.Position)
+                if onScreen then
+                    local mouse = UserInputService:GetMouseLocation()
+                    local dist = (Vector2.new(pos.X, pos.Y) - Vector2.new(mouse.X, mouse.Y)).Magnitude
+                    if dist < fovRadius and dist < shortest then
+                        closest, shortest = head, dist
+                    end
+                end
+            end
+        end
+    end
+    return closest
+end
+
+local function aimAtTarget(target)
+    if not target then return end
+    local pos = Camera:WorldToViewportPoint(target.Position)
+    local mouse = UserInputService:GetMouseLocation()
+    local delta = (Vector2.new(pos.X, pos.Y) - Vector2.new(mouse.X, mouse.Y)) * smoothing
+    mousemoverel(delta.X, delta.Y)
+end
+
+-- UI Elements
+EspTab:CreateToggle({
+    Name = "Activar ESP",
+    CurrentValue = true,
+    Flag = "ESP_Toggle",
+    Callback = function(v)
+        espEnabled = v
+        refreshESP()
+    end
+})
+
+EspTab:CreateToggle({
+    Name = "Ignorar compañeros de equipo",
+    CurrentValue = false,
+    Flag = "IgnoreTeam",
+    Callback = function(v)
+        ignoreTeammates = v
+        refreshESP()
+    end
+})
+
+AimbotTab:CreateToggle({
+    Name = "Activar Aimbot",
+    CurrentValue = false,
+    Flag = "AimbotToggle",
+    Callback = function(v)
+        aimbotEnabled = v
+        fovCircle.Visible = v
+    end
+})
+
+AimbotTab:CreateSlider({
+    Name = "Tamaño del FOV",
+    Range = {50, 500},
+    Increment = 10,
+    Suffix = "px",
+    CurrentValue = 100,
+    Flag = "FOVRadius",
+    Callback = function(v)
+        fovRadius = v
+        fovCircle.Radius = v
+    end
+})
+
+AimbotTab:CreateSlider({
+    Name = "Suavizado",
+    Range = {0.01, 1},
+    Increment = 0.01,
+    CurrentValue = 0.15,
+    Flag = "Smooth",
+    Callback = function(v)
+        smoothing = v
+    end
+})
+
+-- Input
+local aimbotHold = false
+UserInputService.InputBegan:Connect(function(input, gp)
+    if gp then return end
+    if input.UserInputType == aimbotKey then
+        aimbotHold = true
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == aimbotKey then
+        aimbotHold = false
+    end
+end)
+
+-- Loop
+RunService.RenderStepped:Connect(function(dt)
+    if espEnabled then updateHighlightColors() end
+    if aimbotEnabled and aimbotHold then
+        local t = getClosestTarget()
+        aimAtTarget(t)
+    end
+    local vs = Camera.ViewportSize
+    fovCircle.Position = Vector2.new(vs.X/2, vs.Y/2)
+end)
+
+-- Inicial
+refreshESP()
+for _, p in ipairs(Players:GetPlayers()) do
+    if p ~= LocalPlayer then
+        p.CharacterAdded:Connect(function(char)
+            wait(1)
+            if espEnabled then addHighlight(char) end
+        end)
+        if p.Character then addHighlight(p.Character) end
+    end
+end
