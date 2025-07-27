@@ -22,7 +22,7 @@ local Window = Rayfield:CreateWindow({
         Subtitle = "Obten tu clave desde Platoboost o LootLabs",
         Note = "Ingresa tu clave",
         FileName = "DarkKey",
-        SaveKey = true,
+        SaveKey = false,
         GrabKeyFromSite = false,
         Key = {"DarkHub2956829"} -- Reemplaza con tu clave real
     }
