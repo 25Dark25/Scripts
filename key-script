@@ -24,7 +24,7 @@ local Window = Rayfield:CreateWindow({
         FileName = "DarkKey",
         SaveKey = true,
         GrabKeyFromSite = false,
-        Key = {"DarkHub29568294"} -- Reemplaza con tu clave real
+        Key = {"DarkHub2956829"} -- Reemplaza con tu clave real
     }
 })
 
