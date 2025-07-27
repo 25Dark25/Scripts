@@ -37,25 +37,6 @@ local Window = Rayfield:CreateWindow({
    }
 })
 
-Rayfield:Notify({
-    Title = "¿Necesitas la clave?",
-    Content = "Haz clic en el botón para copiar el enlace.",
-    Duration = 5
-})
-
-Window:CreateButton({
-    Name = "🔑 Get Key",
-    Callback = function()
-        setclipboard("https://loot-link.com/s?dmcdRJCo")
-        Rayfield:Notify({
-            Title = "Get Key",
-            Content = "Link Copied",
-            Duration = 3
-        })
-    end
-})
-
-
 -- Crear pestañas
 local EspTab = Window:CreateTab("🧿 ESP", 4483362458)
 local AimbotTab = Window:CreateTab("🎯 Aimbot", 4483362458)
