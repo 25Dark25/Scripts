@@ -25,19 +25,6 @@ local Window = Rayfield:CreateWindow({
       RememberJoins = true -- Set this to false to make them join the discord every time they load it up
    },
 
-   Window:CreateButton({
-    Name = "🔗 Obtener clave",
-    Callback = function()
-        setclipboard("https://loot-link.com/s?dmcdRJCo")
-        Rayfield:Notify({
-            Title = "Clave copiada",
-            Content = "El enlace ha sido copiado al portapapeles",
-            Duration = 3,
-        })
-    end
-})
-
-
    KeySystem = true, -- Set this to true to use our key system
    KeySettings = {
       Title = "Dark Hub",
