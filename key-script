@@ -164,7 +164,12 @@ AimbotTab:CreateKeybind({
 	HoldToInteract = true,
 	Flag = "AimbotKey",
 	Callback = function(Key)
-		aimbotKey = Enum.UserInputType[Key] or Enum.KeyCode[Key]
+		-- Guardamos tanto el tipo como el código
+		if Key == "MouseButton1" or Key == "MouseButton2" or Key == "MouseButton3" then
+			aimbotKey = Enum.UserInputType[Key]
+		else
+			aimbotKey = Enum.KeyCode[Key]
+		end
 	end,
 })
 
@@ -196,13 +201,13 @@ AimbotTab:CreateSlider({
 local aimbotHold = false
 UserInputService.InputBegan:Connect(function(input, gp)
     if gp then return end
-    if input.UserInputType == aimbotKey then
+    if input.UserInputType == aimbotKey or input.KeyCode == aimbotKey then
         aimbotHold = true
     end
 end)
 
 UserInputService.InputEnded:Connect(function(input)
-    if input.UserInputType == aimbotKey then
+    if input.UserInputType == aimbotKey or input.KeyCode == aimbotKey then
         aimbotHold = false
     end
 end)
