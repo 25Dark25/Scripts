@@ -219,12 +219,30 @@ AimbotTab:CreateButton({
    Callback = function()
        Rayfield:Notify({
            Title = "Aimbot Key",
-           Content = "Press any key or mouse button...",
+           Content = "Presiona cualquier tecla o botón del ratón...",
            Duration = 3,
        })
 
--- Input
+       local conn
+       conn = UserInputService.InputBegan:Connect(function(input)
+           if input.UserInputType == Enum.UserInputType.Keyboard or input.UserInputType.Name:match("Mouse") then
+               aimbotKey = input.UserInputType
+               Rayfield:Notify({
+                   Title = "Aimbot Key",
+                   Content = "Establecida en: " .. input.UserInputType.Name,
+                   Duration = 2,
+               })
+               conn:Disconnect()
+           end
+       end)
+   end,
+})
 
+
+
+
+
+-- Input
 local lastColorUpdate = 0
 local colorUpdateInterval = 0.05
 
