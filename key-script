@@ -24,7 +24,7 @@ local Window = Rayfield:CreateWindow({
         FileName = "DarkKey",
         SaveKey = true,
         GrabKeyFromSite = false,
-        Key = {"DarkHub29568294"} -- Reemplaza con tu clave real
+        Key = {"DarkHub29568294"}
     }
 })
 
@@ -36,7 +36,8 @@ local AimbotTab = Window:CreateTab("🎯 Aimbot", 4483362458)
 local espEnabled = true
 local aimbotEnabled = false
 local ignoreTeammates = false
-local aimbotKey = Enum.UserInputType.MouseButton2
+local aimbotKeyType = Enum.UserInputType -- Puede ser Enum.UserInputType o Enum.KeyCode
+local aimbotKeyCode = Enum.UserInputType.MouseButton2 -- Valor real (Mouse o Tecla)
 local smoothing = 0.15
 local fovRadius = 100
 
@@ -164,14 +165,16 @@ AimbotTab:CreateKeybind({
 	HoldToInteract = true,
 	Flag = "AimbotKey",
 	Callback = function(Key)
-		-- Guardamos tanto el tipo como el código
 		if Key == "MouseButton1" or Key == "MouseButton2" or Key == "MouseButton3" then
-			aimbotKey = Enum.UserInputType[Key]
+			aimbotKeyType = Enum.UserInputType
+			aimbotKeyCode = Enum.UserInputType[Key]
 		else
-			aimbotKey = Enum.KeyCode[Key]
+			aimbotKeyType = Enum.KeyCode
+			aimbotKeyCode = Enum.KeyCode[Key]
 		end
 	end,
 })
+
 
 AimbotTab:CreateSlider({
     Name = "Tamaño del FOV",
@@ -197,20 +200,21 @@ AimbotTab:CreateSlider({
     end
 })
 
--- Input
-local aimbotHold = false
 UserInputService.InputBegan:Connect(function(input, gp)
     if gp then return end
-    if input.UserInputType == aimbotKey or input.KeyCode == aimbotKey then
+    if (aimbotKeyType == Enum.UserInputType and input.UserInputType == aimbotKeyCode) or
+       (aimbotKeyType == Enum.KeyCode and input.KeyCode == aimbotKeyCode) then
         aimbotHold = true
     end
 end)
 
 UserInputService.InputEnded:Connect(function(input)
-    if input.UserInputType == aimbotKey or input.KeyCode == aimbotKey then
+    if (aimbotKeyType == Enum.UserInputType and input.UserInputType == aimbotKeyCode) or
+       (aimbotKeyType == Enum.KeyCode and input.KeyCode == aimbotKeyCode) then
         aimbotHold = false
     end
 end)
+
 
 -- Loop
 RunService.RenderStepped:Connect(function(dt)
