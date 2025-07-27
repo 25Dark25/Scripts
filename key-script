@@ -24,7 +24,7 @@ local Window = Rayfield:CreateWindow({
         FileName = "DarkKey",
         SaveKey = true,
         GrabKeyFromSite = false,
-        Key = {"DarkHub29568294"}
+        Key = {"DarkHub29568294"} -- Reemplaza con tu clave real
     }
 })
 
@@ -36,8 +36,7 @@ local AimbotTab = Window:CreateTab("🎯 Aimbot", 4483362458)
 local espEnabled = true
 local aimbotEnabled = false
 local ignoreTeammates = false
-local aimbotKeyType = Enum.UserInputType -- Puede ser Enum.UserInputType o Enum.KeyCode
-local aimbotKeyCode = Enum.UserInputType.MouseButton2 -- Valor real (Mouse o Tecla)
+local aimbotKey = Enum.UserInputType.MouseButton2
 local smoothing = 0.15
 local fovRadius = 100
 
@@ -93,8 +92,18 @@ end
 local function updateHighlightColors()
     for character, hl in pairs(highlighted) do
         if character and hl and character:FindFirstChild("Head") then
-            local visible = workspace:Raycast(Camera.CFrame.Position, (character.Head.Position - Camera.CFrame.Position), RaycastParams.new()) == nil
-            hl.OutlineColor = visible and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
+            local rayParams = RaycastParams.new()
+            rayParams.FilterDescendantsInstances = {Camera, LocalPlayer.Character}
+            rayParams.FilterType = Enum.RaycastFilterType.Blacklist
+
+            local result = workspace:Raycast(
+                Camera.CFrame.Position,
+                (character.Head.Position - Camera.CFrame.Position),
+                rayParams
+            )
+
+            local isVisible = not result
+            hl.OutlineColor = isVisible and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
         end
     end
 end
@@ -159,23 +168,6 @@ AimbotTab:CreateToggle({
     end
 })
 
-AimbotTab:CreateKeybind({
-	Name = "Tecla de Aimbot",
-	CurrentKeybind = "MouseButton2",
-	HoldToInteract = true,
-	Flag = "AimbotKey",
-	Callback = function(Key)
-		if Key == "MouseButton1" or Key == "MouseButton2" or Key == "MouseButton3" then
-			aimbotKeyType = Enum.UserInputType
-			aimbotKeyCode = Enum.UserInputType[Key]
-		else
-			aimbotKeyType = Enum.KeyCode
-			aimbotKeyCode = Enum.KeyCode[Key]
-		end
-	end,
-})
-
-
 AimbotTab:CreateSlider({
     Name = "Tamaño del FOV",
     Range = {50, 500},
@@ -200,21 +192,20 @@ AimbotTab:CreateSlider({
     end
 })
 
+-- Input
+local aimbotHold = false
 UserInputService.InputBegan:Connect(function(input, gp)
     if gp then return end
-    if (aimbotKeyType == Enum.UserInputType and input.UserInputType == aimbotKeyCode) or
-       (aimbotKeyType == Enum.KeyCode and input.KeyCode == aimbotKeyCode) then
+    if input.UserInputType == aimbotKey then
         aimbotHold = true
     end
 end)
 
 UserInputService.InputEnded:Connect(function(input)
-    if (aimbotKeyType == Enum.UserInputType and input.UserInputType == aimbotKeyCode) or
-       (aimbotKeyType == Enum.KeyCode and input.KeyCode == aimbotKeyCode) then
+    if input.UserInputType == aimbotKey then
         aimbotHold = false
     end
 end)
-
 
 -- Loop
 RunService.RenderStepped:Connect(function(dt)
